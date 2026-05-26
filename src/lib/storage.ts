@@ -1,10 +1,12 @@
 import { promises as fs } from 'fs'
 import path from 'path'
+import { put, list } from '@vercel/blob'
 import { LinksData, LinkItem, AnalyticsSummary } from './types'
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'links.json')
-const IS_VERCEL = process.env.VERCEL === '1'
+const IS_PRODUCTION = process.env.VERCEL === '1'
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN || ''
+const BLOB_PATH = 'data/links.json'
 
 const DEFAULT_DATA: LinksData = {
   config: {
@@ -29,63 +31,51 @@ const DEFAULT_DATA: LinksData = {
   },
 }
 
-// ===== VERCEL BLOB STORAGE (using REST API directly) =====
-
-let cachedBlobUrl: string | null = null
-
-async function findBlobUrl(): Promise<string | null> {
-  if (cachedBlobUrl) return cachedBlobUrl
-  try {
-    const res = await fetch(`https://blob.vercel-storage.com?prefix=links.json`, {
-      headers: { authorization: `Bearer ${BLOB_TOKEN}` },
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    if (data.blobs && data.blobs.length > 0) {
-      cachedBlobUrl = data.blobs[0].url
-      return cachedBlobUrl
-    }
-    return null
-  } catch {
-    return null
-  }
-}
+// ===== VERCEL BLOB STORAGE =====
 
 async function readFromBlob(): Promise<LinksData | null> {
   try {
-    const url = await findBlobUrl()
-    if (!url) return null
-    const res = await fetch(url, { cache: 'no-store' })
+    if (!BLOB_TOKEN) return null
+
+    const { blobs } = await list({
+      prefix: BLOB_PATH,
+      token: BLOB_TOKEN,
+    })
+
+    if (blobs.length === 0) return null
+
+    // Get the most recent blob
+    const blob = blobs[0]
+    const res = await fetch(blob.url, { cache: 'no-store' })
     if (!res.ok) return null
-    return await res.json()
-  } catch {
+
+    const data = await res.json()
+    return data as LinksData
+  } catch (err) {
+    console.error('[Storage] readFromBlob error:', err)
     return null
   }
 }
 
-async function writeToBlob(data: LinksData): Promise<void> {
+async function writeToBlob(data: LinksData): Promise<boolean> {
   try {
-    const body = JSON.stringify(data, null, 2)
-    const res = await fetch(`https://blob.vercel-storage.com/links.json`, {
-      method: 'PUT',
-      headers: {
-        authorization: `Bearer ${BLOB_TOKEN}`,
-        'x-content-type': 'application/json',
-        'x-add-random-suffix': 'false',
-        'x-cache-control-max-age': '0',
-      },
-      body,
+    if (!BLOB_TOKEN) return false
+
+    await put(BLOB_PATH, JSON.stringify(data), {
+      access: 'public',
+      token: BLOB_TOKEN,
+      addRandomSuffix: false,
+      contentType: 'application/json',
     })
-    if (res.ok) {
-      const result = await res.json()
-      cachedBlobUrl = result.url
-    }
-  } catch (e) {
-    console.error('Failed to write to blob:', e)
+
+    return true
+  } catch (err) {
+    console.error('[Storage] writeToBlob error:', err)
+    return false
   }
 }
 
-// ===== LOCAL FILE STORAGE =====
+// ===== LOCAL FILE STORAGE (dev) =====
 
 async function readFromFile(): Promise<LinksData | null> {
   try {
@@ -108,20 +98,21 @@ export async function getLinksData(): Promise<LinksData> {
   try {
     let data: LinksData | null = null
 
-    if (IS_VERCEL && BLOB_TOKEN) {
+    if (IS_PRODUCTION && BLOB_TOKEN) {
       data = await readFromBlob()
     } else {
       data = await readFromFile()
     }
 
     if (!data) {
+      // Initialize with default data
       await saveLinksData(DEFAULT_DATA)
       return DEFAULT_DATA
     }
 
     return data
-  } catch (e) {
-    console.error('getLinksData error:', e)
+  } catch (err) {
+    console.error('[Storage] getLinksData error:', err)
     return DEFAULT_DATA
   }
 }
@@ -130,8 +121,11 @@ export async function saveLinksData(data: LinksData): Promise<void> {
   // Recalculate analytics
   data.analytics = calculateAnalytics(data)
 
-  if (IS_VERCEL && BLOB_TOKEN) {
-    await writeToBlob(data)
+  if (IS_PRODUCTION && BLOB_TOKEN) {
+    const success = await writeToBlob(data)
+    if (!success) {
+      console.error('[Storage] Failed to save to blob, data may be lost')
+    }
   } else {
     await writeToFile(data)
   }
