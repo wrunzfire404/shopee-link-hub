@@ -537,54 +537,56 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
   formData: any; setFormData: (d: any) => void; categories: string[]; onSubmit: () => void; submitLabel: string
 }) {
   const [fetching, setFetching] = useState(false)
-  const [fetchError, setFetchError] = useState('')
+  const [productPageUrl, setProductPageUrl] = useState('')
 
-  async function handleAutoFetch() {
+  async function handleResolveLink() {
     if (!formData.url) return
     setFetching(true)
-    setFetchError('')
     try {
       const res = await fetch('/api/links/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: formData.url }),
       })
-      if (!res.ok) {
-        setFetchError('Gagal fetch data. Coba input manual.')
-        setFetching(false)
-        return
+      if (res.ok) {
+        const data = await res.json()
+        if (data.title) {
+          setFormData({ ...formData, title: data.title })
+        }
+        if (data.productPageUrl) {
+          setProductPageUrl(data.productPageUrl)
+        }
       }
-      const data = await res.json()
-      setFormData({
-        ...formData,
-        title: data.title || formData.title,
-        description: data.description || formData.description,
-        imageUrl: data.imageUrl || formData.imageUrl,
-        price: data.price || formData.price,
-        originalPrice: data.originalPrice || formData.originalPrice,
-        discount: data.discount || formData.discount,
-      })
-    } catch {
-      setFetchError('Network error. Coba lagi.')
-    }
+    } catch {}
     setFetching(false)
   }
 
   return (
     <div className="space-y-3">
-      {/* URL + Auto Fetch */}
-      <div className="flex gap-2">
-        <input type="text" placeholder="URL Shopee Affiliate *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="flex-1 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
-        <button
-          type="button"
-          onClick={handleAutoFetch}
-          disabled={!formData.url || fetching}
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {fetching ? '⏳ Fetching...' : '🔍 Auto Fetch'}
-        </button>
+      {/* URL input */}
+      <div>
+        <input type="text" placeholder="URL Shopee Affiliate (shortlink / full link) *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+        {formData.url && (
+          <div className="flex gap-2 mt-2">
+            <button type="button" onClick={handleResolveLink} disabled={fetching} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg disabled:opacity-50">
+              {fetching ? '⏳...' : '🔗 Resolve Link'}
+            </button>
+            <a href={formData.url} target="_blank" rel="noopener" className="px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs rounded-lg inline-flex items-center gap-1">
+              🛒 Buka di Shopee
+            </a>
+            {productPageUrl && productPageUrl !== formData.url && (
+              <a href={productPageUrl} target="_blank" rel="noopener" className="px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] text-white text-xs rounded-lg inline-flex items-center gap-1 hover:border-[var(--accent)]">
+                📄 Product Page
+              </a>
+            )}
+          </div>
+        )}
       </div>
-      {fetchError && <p className="text-red-400 text-xs">{fetchError}</p>}
+
+      {/* Tip */}
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
+        <p className="text-xs text-blue-300">💡 Klik &quot;Buka di Shopee&quot; → copy nama produk dari sana. Gambar bisa klik kanan → &quot;Copy image address&quot;.</p>
+      </div>
 
       <input type="text" placeholder="Nama Produk *" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
 
@@ -607,7 +609,7 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
           <option value="">No Category</option>
           {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
         </select>
-        <input type="text" placeholder="Image URL (optional)" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+        <input type="text" placeholder="Image URL (paste dari Shopee)" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       </div>
       <input type="text" placeholder="Deskripsi singkat (optional)" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       <button onClick={onSubmit} disabled={!formData.title || !formData.url} className="w-full py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
