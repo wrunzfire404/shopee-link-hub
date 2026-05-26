@@ -1,7 +1,16 @@
 {
   "config": {
     "name": "Reza Shop",
-    "description": "Produk Pilihan dengan Harga Terbaik 🛍️"
+    "description": "Produk Pilihan dengan Harga Terbaik 🛍️",
+    "theme": "dark",
+    "accentColor": "#ee4d2d",
+    "showPoweredBy": false,
+    "footerText": "🛍️ Semua link mengarah ke Shopee Official",
+    "socialLinks": {
+      "tiktok": "",
+      "instagram": "",
+      "facebook": ""
+    }
   },
   "links": [
     {
@@ -12,9 +21,13 @@
       "url": "https://shope.ee/example1",
       "imageUrl": "",
       "price": "Rp 49.900",
+      "originalPrice": "Rp 99.000",
       "discount": "-50%",
+      "category": "Fashion",
       "isActive": true,
+      "isPinned": true,
       "clicks": 0,
+      "clickHistory": [],
       "createdAt": "2026-05-26T00:00:00.000Z",
       "updatedAt": "2026-05-26T00:00:00.000Z"
     },
@@ -26,9 +39,13 @@
       "url": "https://shope.ee/example2",
       "imageUrl": "",
       "price": "Rp 89.000",
+      "originalPrice": "Rp 150.000",
       "discount": "-30%",
+      "category": "Beauty",
       "isActive": true,
+      "isPinned": false,
       "clicks": 0,
+      "clickHistory": [],
       "createdAt": "2026-05-26T00:00:00.000Z",
       "updatedAt": "2026-05-26T00:00:00.000Z"
     },
@@ -40,11 +57,26 @@
       "url": "https://shope.ee/example3",
       "imageUrl": "",
       "price": "Rp 75.000",
+      "originalPrice": "Rp 120.000",
       "discount": "-40%",
+      "category": "Electronics",
       "isActive": true,
+      "isPinned": false,
       "clicks": 0,
+      "clickHistory": [],
       "createdAt": "2026-05-26T00:00:00.000Z",
       "updatedAt": "2026-05-26T00:00:00.000Z"
     }
-  ]
+  ],
+  "categories": ["Fashion", "Beauty", "Electronics", "Home", "Food", "Other"],
+  "analytics": {
+    "totalClicks": 0,
+    "totalLinks": 3,
+    "activeLinks": 3,
+    "clicksToday": 0,
+    "clicksThisWeek": 0,
+    "clicksThisMonth": 0,
+    "topLinks": [],
+    "dailyClicks": []
+  }
 }

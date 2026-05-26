@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getLinksData, saveLinksData } from '@/lib/storage'
 import { isAuthenticated } from '@/lib/auth'
 
+// GET - get single link
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const data = await getLinksData()
+  const link = data.links.find(l => l.id === params.id)
+  if (!link) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+  return NextResponse.json(link)
+}
+
 // PUT - update a link
 export async function PUT(
   request: NextRequest,
@@ -20,15 +33,17 @@ export async function PUT(
     return NextResponse.json({ error: 'Link not found' }, { status: 404 })
   }
 
-  // Update fields
   const link = data.links[linkIndex]
   if (body.title !== undefined) link.title = body.title
   if (body.description !== undefined) link.description = body.description
   if (body.url !== undefined) link.url = body.url
   if (body.imageUrl !== undefined) link.imageUrl = body.imageUrl
   if (body.price !== undefined) link.price = body.price
+  if (body.originalPrice !== undefined) link.originalPrice = body.originalPrice
   if (body.discount !== undefined) link.discount = body.discount
+  if (body.category !== undefined) link.category = body.category
   if (body.isActive !== undefined) link.isActive = body.isActive
+  if (body.isPinned !== undefined) link.isPinned = body.isPinned
   if (body.number !== undefined) link.number = body.number
   link.updatedAt = new Date().toISOString()
 
