@@ -1,0 +1,50 @@
+{
+  "config": {
+    "name": "Reza Shop",
+    "description": "Produk Pilihan dengan Harga Terbaik 🛍️"
+  },
+  "links": [
+    {
+      "id": "sample1",
+      "number": 1,
+      "title": "Jam Tangan Wanita Elegant",
+      "description": "Anti air, garansi 1 tahun",
+      "url": "https://shope.ee/example1",
+      "imageUrl": "",
+      "price": "Rp 49.900",
+      "discount": "-50%",
+      "isActive": true,
+      "clicks": 0,
+      "createdAt": "2026-05-26T00:00:00.000Z",
+      "updatedAt": "2026-05-26T00:00:00.000Z"
+    },
+    {
+      "id": "sample2",
+      "number": 2,
+      "title": "Skincare Set Lengkap",
+      "description": "Paket hemat perawatan wajah",
+      "url": "https://shope.ee/example2",
+      "imageUrl": "",
+      "price": "Rp 89.000",
+      "discount": "-30%",
+      "isActive": true,
+      "clicks": 0,
+      "createdAt": "2026-05-26T00:00:00.000Z",
+      "updatedAt": "2026-05-26T00:00:00.000Z"
+    },
+    {
+      "id": "sample3",
+      "number": 3,
+      "title": "Headset Gaming RGB",
+      "description": "Surround sound, mic noise cancel",
+      "url": "https://shope.ee/example3",
+      "imageUrl": "",
+      "price": "Rp 75.000",
+      "discount": "-40%",
+      "isActive": true,
+      "clicks": 0,
+      "createdAt": "2026-05-26T00:00:00.000Z",
+      "updatedAt": "2026-05-26T00:00:00.000Z"
+    }
+  ]
+}
