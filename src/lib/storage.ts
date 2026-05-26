@@ -1,12 +1,12 @@
 import { promises as fs } from 'fs'
 import path from 'path'
-import { put, list } from '@vercel/blob'
+import { put, list, del } from '@vercel/blob'
 import { LinksData, LinkItem, AnalyticsSummary } from './types'
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'links.json')
 const IS_PRODUCTION = process.env.VERCEL === '1'
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN || ''
-const BLOB_PATH = 'data/links.json'
+const BLOB_PATH = 'shopee-links-data.json'
 
 const DEFAULT_DATA: LinksData = {
   config: {
@@ -35,22 +35,39 @@ const DEFAULT_DATA: LinksData = {
 
 async function readFromBlob(): Promise<LinksData | null> {
   try {
-    if (!BLOB_TOKEN) return null
+    if (!BLOB_TOKEN) {
+      console.log('[Storage] No BLOB_TOKEN')
+      return null
+    }
 
+    // List all blobs with our prefix
     const { blobs } = await list({
-      prefix: BLOB_PATH,
+      prefix: 'shopee-links-data',
       token: BLOB_TOKEN,
     })
 
-    if (blobs.length === 0) return null
+    if (!blobs || blobs.length === 0) {
+      console.log('[Storage] No blobs found')
+      return null
+    }
 
-    // Get the most recent blob
-    const blob = blobs[0]
-    const res = await fetch(blob.url, { cache: 'no-store' })
-    if (!res.ok) return null
+    // Sort by uploadedAt descending, get most recent
+    const sorted = blobs.sort((a, b) =>
+      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+    )
+    const latestBlob = sorted[0]
 
-    const data = await res.json()
-    return data as LinksData
+    console.log('[Storage] Reading blob:', latestBlob.url)
+
+    const res = await fetch(latestBlob.url, { cache: 'no-store' })
+    if (!res.ok) {
+      console.log('[Storage] Fetch blob failed:', res.status)
+      return null
+    }
+
+    const text = await res.text()
+    const data = JSON.parse(text) as LinksData
+    return data
   } catch (err) {
     console.error('[Storage] readFromBlob error:', err)
     return null
@@ -59,15 +76,36 @@ async function readFromBlob(): Promise<LinksData | null> {
 
 async function writeToBlob(data: LinksData): Promise<boolean> {
   try {
-    if (!BLOB_TOKEN) return false
+    if (!BLOB_TOKEN) {
+      console.log('[Storage] No BLOB_TOKEN for write')
+      return false
+    }
 
-    await put(BLOB_PATH, JSON.stringify(data), {
+    const jsonStr = JSON.stringify(data)
+
+    // Delete old blobs first to keep it clean
+    try {
+      const { blobs } = await list({
+        prefix: 'shopee-links-data',
+        token: BLOB_TOKEN,
+      })
+      if (blobs && blobs.length > 0) {
+        for (const blob of blobs) {
+          await del(blob.url, { token: BLOB_TOKEN })
+        }
+      }
+    } catch {
+      // Ignore delete errors
+    }
+
+    // Write new blob
+    const result = await put(BLOB_PATH, jsonStr, {
       access: 'public',
       token: BLOB_TOKEN,
-      addRandomSuffix: false,
       contentType: 'application/json',
     })
 
+    console.log('[Storage] Written to blob:', result.url)
     return true
   } catch (err) {
     console.error('[Storage] writeToBlob error:', err)
@@ -105,7 +143,6 @@ export async function getLinksData(): Promise<LinksData> {
     }
 
     if (!data) {
-      // Initialize with default data
       await saveLinksData(DEFAULT_DATA)
       return DEFAULT_DATA
     }
@@ -124,7 +161,7 @@ export async function saveLinksData(data: LinksData): Promise<void> {
   if (IS_PRODUCTION && BLOB_TOKEN) {
     const success = await writeToBlob(data)
     if (!success) {
-      console.error('[Storage] Failed to save to blob, data may be lost')
+      console.error('[Storage] CRITICAL: Failed to save to blob')
     }
   } else {
     await writeToFile(data)
