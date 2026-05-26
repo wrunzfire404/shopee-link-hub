@@ -537,6 +537,7 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
   formData: any; setFormData: (d: any) => void; categories: string[]; onSubmit: () => void; submitLabel: string
 }) {
   const [fetching, setFetching] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [productPageUrl, setProductPageUrl] = useState('')
 
   async function handleResolveLink() {
@@ -550,15 +551,33 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
       })
       if (res.ok) {
         const data = await res.json()
-        if (data.title) {
-          setFormData({ ...formData, title: data.title })
-        }
-        if (data.productPageUrl) {
-          setProductPageUrl(data.productPageUrl)
-        }
+        if (data.title) setFormData({ ...formData, title: data.title })
+        if (data.productPageUrl) setProductPageUrl(data.productPageUrl)
       }
     } catch {}
     setFetching(false)
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      if (res.ok) {
+        const { url } = await res.json()
+        setFormData({ ...formData, imageUrl: url })
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      }
+    } catch {
+      alert('Upload failed')
+    }
+    setUploading(false)
+    e.target.value = ''
   }
 
   return (
@@ -583,21 +602,33 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
         )}
       </div>
 
-      {/* Tip */}
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
-        <p className="text-xs text-blue-300">💡 Klik &quot;Buka di Shopee&quot; → copy nama produk dari sana. Gambar bisa klik kanan → &quot;Copy image address&quot;.</p>
-      </div>
-
       <input type="text" placeholder="Nama Produk *" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
 
-      {/* Image Preview */}
-      {formData.imageUrl && (
-        <div className="flex items-center gap-3 p-2 bg-[var(--bg-secondary)] rounded-lg">
-          <img src={formData.imageUrl} alt="Product" className="w-12 h-12 object-cover rounded" />
-          <span className="text-xs text-[var(--text-secondary)] truncate flex-1">{formData.imageUrl}</span>
-          <button onClick={() => setFormData({...formData, imageUrl: ''})} className="text-red-400 text-xs">✕</button>
-        </div>
-      )}
+      {/* Image Section */}
+      <div>
+        <label className="text-xs text-[var(--text-secondary)] mb-1.5 block">Foto Produk</label>
+        {formData.imageUrl ? (
+          <div className="flex items-center gap-3 p-2 bg-[var(--bg-secondary)] rounded-lg">
+            <img src={formData.imageUrl} alt="Product" className="w-14 h-14 object-cover rounded-lg" />
+            <span className="text-xs text-[var(--text-secondary)] truncate flex-1">{formData.imageUrl.length > 50 ? '...' + formData.imageUrl.slice(-40) : formData.imageUrl}</span>
+            <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-red-400 text-xs hover:text-red-300">✕ Hapus</button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {/* Upload from device */}
+            <label className="flex-1 cursor-pointer">
+              <div className="px-3 py-3 bg-[var(--bg-secondary)] border border-dashed border-[var(--border)] rounded-lg text-center hover:border-[var(--accent)] transition-colors">
+                <p className="text-xs text-[var(--text-secondary)]">
+                  {uploading ? '⏳ Uploading...' : '📁 Upload dari HP/PC'}
+                </p>
+              </div>
+              <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
+            </label>
+            {/* Or paste URL */}
+            <input type="text" placeholder="atau paste Image URL" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="flex-1 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-xs placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-3 gap-2">
         <input type="text" placeholder="Harga" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
@@ -609,10 +640,9 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
           <option value="">No Category</option>
           {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
         </select>
-        <input type="text" placeholder="Image URL (paste dari Shopee)" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+        <input type="text" placeholder="Deskripsi singkat" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       </div>
-      <input type="text" placeholder="Deskripsi singkat (optional)" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
-      <button onClick={onSubmit} disabled={!formData.title || !formData.url} className="w-full py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+      <button onClick={onSubmit} disabled={!formData.title || !formData.url} className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
         {submitLabel}
       </button>
     </div>
