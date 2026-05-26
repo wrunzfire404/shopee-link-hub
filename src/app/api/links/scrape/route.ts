@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 
-// POST - scrape product info from Shopee URL
+// POST - extract product info from Shopee URL
 export async function POST(request: NextRequest) {
   const authenticated = await isAuthenticated()
   if (!authenticated) {
@@ -14,10 +14,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Try to extract product info from Shopee URL
-    // Shopee affiliate links redirect to actual product pages
-    // We fetch the page and extract Open Graph meta tags
-    const productData = await scrapeShopeeProduct(url)
+    const productData = await extractShopeeProduct(url)
     return NextResponse.json(productData)
   } catch (e: any) {
     return NextResponse.json(
@@ -27,113 +24,141 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function scrapeShopeeProduct(url: string) {
-  // Follow redirects to get final URL
-  const response = await fetch(url, {
-    redirect: 'follow',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
-  })
+async function extractShopeeProduct(url: string) {
+  // Extract shop_id and item_id from Shopee URL
+  // Shopee URL formats:
+  // https://shopee.co.id/Product-Name-i.shopid.itemid
+  // https://shopee.co.id/product/shopid/itemid
+  // https://shope.ee/xxxxx (short link - need to resolve)
 
-  const html = await response.text()
+  let finalUrl = url
 
-  // Extract Open Graph tags
-  const title = extractMeta(html, 'og:title') || extractMeta(html, 'title') || ''
-  const description = extractMeta(html, 'og:description') || ''
-  const imageUrl = extractMeta(html, 'og:image') || ''
-
-  // Try to extract price from meta or structured data
-  const price = extractPrice(html)
-  const originalPrice = extractOriginalPrice(html)
-  const discount = calculateDiscount(price, originalPrice)
-
-  return {
-    title: cleanTitle(title),
-    description: description.slice(0, 100),
-    imageUrl,
-    price: price ? formatRupiah(price) : '',
-    originalPrice: originalPrice ? formatRupiah(originalPrice) : '',
-    discount: discount || '',
-  }
-}
-
-function extractMeta(html: string, property: string): string {
-  // Try og: property
-  const ogMatch = html.match(
-    new RegExp(`<meta[^>]*property=["']og:${property.replace('og:', '')}["'][^>]*content=["']([^"']*)["']`, 'i')
-  )
-  if (ogMatch) return ogMatch[1]
-
-  // Try name property
-  const nameMatch = html.match(
-    new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i')
-  )
-  if (nameMatch) return nameMatch[1]
-
-  // Try reversed attribute order
-  const reversedMatch = html.match(
-    new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:${property.replace('og:', '')}["']`, 'i')
-  )
-  if (reversedMatch) return reversedMatch[1]
-
-  return ''
-}
-
-function extractPrice(html: string): number | null {
-  // Look for price in structured data (JSON-LD)
-  const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
-  if (jsonLdMatch) {
-    for (const match of jsonLdMatch) {
-      const jsonContent = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '')
+  // If it's a short link, resolve it
+  if (url.includes('shope.ee') || url.includes('s.shopee')) {
+    try {
+      const res = await fetch(url, { redirect: 'manual' })
+      const location = res.headers.get('location')
+      if (location) finalUrl = location
+    } catch {
+      // If redirect fails, try follow
       try {
-        const data = JSON.parse(jsonContent)
-        if (data.offers?.price) return Number(data.offers.price)
-        if (data.offers?.lowPrice) return Number(data.offers.lowPrice)
+        const res = await fetch(url, { redirect: 'follow' })
+        finalUrl = res.url
       } catch {}
     }
   }
 
-  // Look for price pattern in og:description or page content
-  const priceMatch = html.match(/Rp\s?([\d.,]+)/i)
-  if (priceMatch) {
-    const cleaned = priceMatch[1].replace(/\./g, '').replace(',', '')
-    return Number(cleaned)
+  // Extract IDs from URL
+  const ids = extractShopeeIds(finalUrl)
+
+  if (ids) {
+    // Use Shopee's public item API
+    const itemData = await fetchShopeeItem(ids.shopId, ids.itemId)
+    if (itemData) return itemData
+  }
+
+  // Fallback: extract product name from URL slug
+  return extractFromUrl(finalUrl)
+}
+
+function extractShopeeIds(url: string): { shopId: string; itemId: string } | null {
+  // Format: https://shopee.co.id/Product-Name-i.123456.789012
+  const iDotMatch = url.match(/i\.(\d+)\.(\d+)/)
+  if (iDotMatch) {
+    return { shopId: iDotMatch[1], itemId: iDotMatch[2] }
+  }
+
+  // Format: https://shopee.co.id/product/123456/789012
+  const productMatch = url.match(/\/product\/(\d+)\/(\d+)/)
+  if (productMatch) {
+    return { shopId: productMatch[1], itemId: productMatch[2] }
   }
 
   return null
 }
 
-function extractOriginalPrice(html: string): number | null {
-  // Try to find original/strikethrough price in JSON-LD
-  const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
-  if (jsonLdMatch) {
-    for (const match of jsonLdMatch) {
-      const jsonContent = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '')
-      try {
-        const data = JSON.parse(jsonContent)
-        if (data.offers?.highPrice) return Number(data.offers.highPrice)
-      } catch {}
+async function fetchShopeeItem(shopId: string, itemId: string) {
+  try {
+    // Shopee public item detail API
+    const apiUrl = `https://shopee.co.id/api/v4/item/get?shopid=${shopId}&itemid=${itemId}`
+
+    const res = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://shopee.co.id/',
+      },
+    })
+
+    if (!res.ok) return null
+
+    const json = await res.json()
+    const item = json.data
+
+    if (!item) return null
+
+    const price = item.price ? item.price / 100000 : null
+    const originalPrice = item.price_before_discount ? item.price_before_discount / 100000 : null
+    const discount = item.raw_discount || 0
+
+    // Image URL - Shopee stores images with hash
+    const imageUrl = item.image
+      ? `https://down-id.img.susercontent.com/file/${item.image}`
+      : ''
+
+    return {
+      title: item.name || '',
+      description: (item.description || '').slice(0, 100),
+      imageUrl,
+      price: price ? formatRupiah(price) : '',
+      originalPrice: originalPrice ? formatRupiah(originalPrice) : '',
+      discount: discount ? `-${discount}%` : '',
     }
+  } catch {
+    return null
   }
-  return null
 }
 
-function calculateDiscount(price: number | null, originalPrice: number | null): string {
-  if (!price || !originalPrice || originalPrice <= price) return ''
-  const discount = Math.round(((originalPrice - price) / originalPrice) * 100)
-  return `-${discount}%`
+function extractFromUrl(url: string): any {
+  // Extract product name from URL slug
+  // https://shopee.co.id/Cohan-DR036-Dress-Mini-Sleeveless-i.46xxx.17xxx
+  try {
+    const urlObj = new URL(url)
+    let pathname = urlObj.pathname
+
+    // Remove leading slash
+    pathname = pathname.replace(/^\//, '')
+
+    // Remove the i.shopid.itemid part
+    pathname = pathname.replace(/-i\.\d+\.\d+.*$/, '')
+
+    // Replace hyphens with spaces and capitalize
+    const title = pathname
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .trim()
+      .slice(0, 80)
+
+    return {
+      title: title || 'Product',
+      description: '',
+      imageUrl: '',
+      price: '',
+      originalPrice: '',
+      discount: '',
+    }
+  } catch {
+    return {
+      title: '',
+      description: '',
+      imageUrl: '',
+      price: '',
+      originalPrice: '',
+      discount: '',
+    }
+  }
 }
 
 function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString('id-ID')}`
-}
-
-function cleanTitle(title: string): string {
-  // Remove common Shopee suffixes
-  return title
-    .replace(/\s*\|\s*Shopee\s*Indonesia/gi, '')
-    .replace(/\s*-\s*Shopee/gi, '')
-    .trim()
-    .slice(0, 80)
+  return `Rp ${Math.round(amount).toLocaleString('id-ID')}`
 }
