@@ -1,12 +1,13 @@
 import { promises as fs } from 'fs'
 import path from 'path'
-import { put, list, del } from '@vercel/blob'
+import { Redis } from '@upstash/redis'
 import { LinksData, LinkItem, AnalyticsSummary } from './types'
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'links.json')
 const IS_PRODUCTION = process.env.VERCEL === '1'
-const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN || ''
-const BLOB_PATH = 'shopee-links-data.json'
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || ''
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || ''
+const REDIS_KEY = 'shopee-links-data'
 
 const DEFAULT_DATA: LinksData = {
   config: {
@@ -31,84 +32,35 @@ const DEFAULT_DATA: LinksData = {
   },
 }
 
-// ===== VERCEL BLOB STORAGE =====
+// ===== REDIS CLIENT =====
 
-async function readFromBlob(): Promise<LinksData | null> {
+function getRedis(): Redis | null {
+  if (!REDIS_URL || !REDIS_TOKEN) return null
+  return new Redis({ url: REDIS_URL, token: REDIS_TOKEN })
+}
+
+// ===== REDIS STORAGE =====
+
+async function readFromRedis(): Promise<LinksData | null> {
   try {
-    if (!BLOB_TOKEN) {
-      console.log('[Storage] No BLOB_TOKEN')
-      return null
-    }
-
-    // List all blobs with our prefix
-    const { blobs } = await list({
-      prefix: 'shopee-links-data',
-      token: BLOB_TOKEN,
-    })
-
-    if (!blobs || blobs.length === 0) {
-      console.log('[Storage] No blobs found')
-      return null
-    }
-
-    // Sort by uploadedAt descending, get most recent
-    const sorted = blobs.sort((a, b) =>
-      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    )
-    const latestBlob = sorted[0]
-
-    console.log('[Storage] Reading blob:', latestBlob.url)
-
-    const res = await fetch(latestBlob.url, { cache: 'no-store' })
-    if (!res.ok) {
-      console.log('[Storage] Fetch blob failed:', res.status)
-      return null
-    }
-
-    const text = await res.text()
-    const data = JSON.parse(text) as LinksData
-    return data
+    const redis = getRedis()
+    if (!redis) return null
+    const data = await redis.get<LinksData>(REDIS_KEY)
+    return data || null
   } catch (err) {
-    console.error('[Storage] readFromBlob error:', err)
+    console.error('[Storage] Redis read error:', err)
     return null
   }
 }
 
-async function writeToBlob(data: LinksData): Promise<boolean> {
+async function writeToRedis(data: LinksData): Promise<boolean> {
   try {
-    if (!BLOB_TOKEN) {
-      console.log('[Storage] No BLOB_TOKEN for write')
-      return false
-    }
-
-    const jsonStr = JSON.stringify(data)
-
-    // Delete old blobs first to keep it clean
-    try {
-      const { blobs } = await list({
-        prefix: 'shopee-links-data',
-        token: BLOB_TOKEN,
-      })
-      if (blobs && blobs.length > 0) {
-        for (const blob of blobs) {
-          await del(blob.url, { token: BLOB_TOKEN })
-        }
-      }
-    } catch {
-      // Ignore delete errors
-    }
-
-    // Write new blob
-    const result = await put(BLOB_PATH, jsonStr, {
-      access: 'public',
-      token: BLOB_TOKEN,
-      contentType: 'application/json',
-    })
-
-    console.log('[Storage] Written to blob:', result.url)
+    const redis = getRedis()
+    if (!redis) return false
+    await redis.set(REDIS_KEY, data)
     return true
   } catch (err) {
-    console.error('[Storage] writeToBlob error:', err)
+    console.error('[Storage] Redis write error:', err)
     return false
   }
 }
@@ -136,8 +88,8 @@ export async function getLinksData(): Promise<LinksData> {
   try {
     let data: LinksData | null = null
 
-    if (IS_PRODUCTION && BLOB_TOKEN) {
-      data = await readFromBlob()
+    if (IS_PRODUCTION && (REDIS_URL && REDIS_TOKEN)) {
+      data = await readFromRedis()
     } else {
       data = await readFromFile()
     }
@@ -155,14 +107,10 @@ export async function getLinksData(): Promise<LinksData> {
 }
 
 export async function saveLinksData(data: LinksData): Promise<void> {
-  // Recalculate analytics
   data.analytics = calculateAnalytics(data)
 
-  if (IS_PRODUCTION && BLOB_TOKEN) {
-    const success = await writeToBlob(data)
-    if (!success) {
-      console.error('[Storage] CRITICAL: Failed to save to blob')
-    }
+  if (IS_PRODUCTION && (REDIS_URL && REDIS_TOKEN)) {
+    await writeToRedis(data)
   } else {
     await writeToFile(data)
   }
