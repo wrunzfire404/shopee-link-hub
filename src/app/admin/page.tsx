@@ -536,10 +536,67 @@ function SocialInput({ label, value, onChange, placeholder }: { label: string; v
 function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: {
   formData: any; setFormData: (d: any) => void; categories: string[]; onSubmit: () => void; submitLabel: string
 }) {
+  const [fetching, setFetching] = useState(false)
+  const [fetchError, setFetchError] = useState('')
+
+  async function handleAutoFetch() {
+    if (!formData.url) return
+    setFetching(true)
+    setFetchError('')
+    try {
+      const res = await fetch('/api/links/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: formData.url }),
+      })
+      if (!res.ok) {
+        setFetchError('Gagal fetch data. Coba input manual.')
+        setFetching(false)
+        return
+      }
+      const data = await res.json()
+      setFormData({
+        ...formData,
+        title: data.title || formData.title,
+        description: data.description || formData.description,
+        imageUrl: data.imageUrl || formData.imageUrl,
+        price: data.price || formData.price,
+        originalPrice: data.originalPrice || formData.originalPrice,
+        discount: data.discount || formData.discount,
+      })
+    } catch {
+      setFetchError('Network error. Coba lagi.')
+    }
+    setFetching(false)
+  }
+
   return (
     <div className="space-y-3">
+      {/* URL + Auto Fetch */}
+      <div className="flex gap-2">
+        <input type="text" placeholder="URL Shopee Affiliate *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="flex-1 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+        <button
+          type="button"
+          onClick={handleAutoFetch}
+          disabled={!formData.url || fetching}
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {fetching ? '⏳ Fetching...' : '🔍 Auto Fetch'}
+        </button>
+      </div>
+      {fetchError && <p className="text-red-400 text-xs">{fetchError}</p>}
+
       <input type="text" placeholder="Nama Produk *" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
-      <input type="text" placeholder="URL Shopee Affiliate *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+
+      {/* Image Preview */}
+      {formData.imageUrl && (
+        <div className="flex items-center gap-3 p-2 bg-[var(--bg-secondary)] rounded-lg">
+          <img src={formData.imageUrl} alt="Product" className="w-12 h-12 object-cover rounded" />
+          <span className="text-xs text-[var(--text-secondary)] truncate flex-1">{formData.imageUrl}</span>
+          <button onClick={() => setFormData({...formData, imageUrl: ''})} className="text-red-400 text-xs">✕</button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-2">
         <input type="text" placeholder="Harga" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
         <input type="text" placeholder="Harga Asli" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />

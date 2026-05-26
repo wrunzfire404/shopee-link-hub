@@ -20,10 +20,14 @@ export default function LinkCard({ link }: LinkCardProps) {
       onClick={handleClick}
       className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-4 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] transition-all duration-200 text-left group"
     >
-      {/* Number badge */}
-      <div className="flex-shrink-0 w-10 h-10 bg-[var(--accent)] rounded-lg flex items-center justify-center shadow-md">
-        <span className="text-white font-bold text-lg">{link.number}</span>
-      </div>
+      {/* Image or Number badge */}
+      {link.imageUrl ? (
+        <img src={link.imageUrl} alt={link.title} className="flex-shrink-0 w-12 h-12 object-cover rounded-lg" />
+      ) : (
+        <div className="flex-shrink-0 w-10 h-10 bg-[var(--accent)] rounded-lg flex items-center justify-center shadow-md">
+          <span className="text-white font-bold text-lg">{link.number}</span>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">
