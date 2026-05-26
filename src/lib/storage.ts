@@ -1,11 +1,10 @@
 import { promises as fs } from 'fs'
 import path from 'path'
-import { put, list, del } from '@vercel/blob'
-import { LinksData, LinkItem, AnalyticsSummary, ClickRecord } from './types'
+import { LinksData, LinkItem, AnalyticsSummary } from './types'
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'links.json')
-const BLOB_FILENAME = 'shopee-link-hub/links.json'
-const IS_VERCEL = process.env.VERCEL === '1' || process.env.BLOB_READ_WRITE_TOKEN
+const IS_VERCEL = process.env.VERCEL === '1'
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN || ''
 
 const DEFAULT_DATA: LinksData = {
   config: {
@@ -30,15 +29,34 @@ const DEFAULT_DATA: LinksData = {
   },
 }
 
-// ===== STORAGE LAYER =====
-// Uses local JSON file in dev, Vercel Blob in production
+// ===== VERCEL BLOB STORAGE (using REST API directly) =====
+
+let cachedBlobUrl: string | null = null
+
+async function findBlobUrl(): Promise<string | null> {
+  if (cachedBlobUrl) return cachedBlobUrl
+  try {
+    const res = await fetch(`https://blob.vercel-storage.com?prefix=links.json`, {
+      headers: { authorization: `Bearer ${BLOB_TOKEN}` },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.blobs && data.blobs.length > 0) {
+      cachedBlobUrl = data.blobs[0].url
+      return cachedBlobUrl
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
 async function readFromBlob(): Promise<LinksData | null> {
   try {
-    const { blobs } = await list({ prefix: 'shopee-link-hub/' })
-    const blob = blobs.find(b => b.pathname === BLOB_FILENAME)
-    if (!blob) return null
-    const res = await fetch(blob.url)
+    const url = await findBlobUrl()
+    if (!url) return null
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return null
     return await res.json()
   } catch {
     return null
@@ -46,11 +64,28 @@ async function readFromBlob(): Promise<LinksData | null> {
 }
 
 async function writeToBlob(data: LinksData): Promise<void> {
-  await put(BLOB_FILENAME, JSON.stringify(data, null, 2), {
-    access: 'public',
-    addRandomSuffix: false,
-  })
+  try {
+    const body = JSON.stringify(data, null, 2)
+    const res = await fetch(`https://blob.vercel-storage.com/links.json`, {
+      method: 'PUT',
+      headers: {
+        authorization: `Bearer ${BLOB_TOKEN}`,
+        'x-content-type': 'application/json',
+        'x-add-random-suffix': 'false',
+        'x-cache-control-max-age': '0',
+      },
+      body,
+    })
+    if (res.ok) {
+      const result = await res.json()
+      cachedBlobUrl = result.url
+    }
+  } catch (e) {
+    console.error('Failed to write to blob:', e)
+  }
 }
+
+// ===== LOCAL FILE STORAGE =====
 
 async function readFromFile(): Promise<LinksData | null> {
   try {
@@ -70,27 +105,32 @@ async function writeToFile(data: LinksData): Promise<void> {
 // ===== PUBLIC API =====
 
 export async function getLinksData(): Promise<LinksData> {
-  let data: LinksData | null = null
+  try {
+    let data: LinksData | null = null
 
-  if (IS_VERCEL) {
-    data = await readFromBlob()
-  } else {
-    data = await readFromFile()
-  }
+    if (IS_VERCEL && BLOB_TOKEN) {
+      data = await readFromBlob()
+    } else {
+      data = await readFromFile()
+    }
 
-  if (!data) {
-    await saveLinksData(DEFAULT_DATA)
+    if (!data) {
+      await saveLinksData(DEFAULT_DATA)
+      return DEFAULT_DATA
+    }
+
+    return data
+  } catch (e) {
+    console.error('getLinksData error:', e)
     return DEFAULT_DATA
   }
-
-  return data
 }
 
 export async function saveLinksData(data: LinksData): Promise<void> {
   // Recalculate analytics
   data.analytics = calculateAnalytics(data)
 
-  if (IS_VERCEL) {
+  if (IS_VERCEL && BLOB_TOKEN) {
     await writeToBlob(data)
   } else {
     await writeToFile(data)
@@ -102,7 +142,6 @@ export async function getActiveLinks(): Promise<LinkItem[]> {
   return data.links
     .filter(link => link.isActive)
     .sort((a, b) => {
-      // Pinned items first, then by number
       if (a.isPinned && !b.isPinned) return -1
       if (!a.isPinned && b.isPinned) return 1
       return a.number - b.number
@@ -143,11 +182,10 @@ function calculateAnalytics(data: LinksData): AnalyticsSummary {
   const dailyClicksMap: Record<string, number> = {}
 
   for (const link of data.links) {
-    for (const record of link.clickHistory) {
+    for (const record of link.clickHistory || []) {
       if (record.date === today) clicksToday += record.count
       if (record.date >= weekAgo) clicksThisWeek += record.count
       if (record.date >= monthAgo) clicksThisMonth += record.count
-
       if (record.date >= monthAgo) {
         dailyClicksMap[record.date] = (dailyClicksMap[record.date] || 0) + record.count
       }
