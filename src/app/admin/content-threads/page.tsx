@@ -155,16 +155,36 @@ export default function ContentThreadsPage() {
   function removeImage(idx: number) { setExtraImages(prev => prev.filter((_, i) => i !== idx)) }
 
   async function postToAllAccounts() {
-    if (!baseCaption || selectedAccountIds.length === 0) return
+    if (!baseCaption || selectedAccountIds.length === 0 || extraImages.length === 0) return
     setStatus('posting')
     setError('')
     setPostResults([])
     setPostProgress(0)
 
+    // Generate unique image variants for each account
+    let imageVariants: string[][] = []
+    if (selectedAccountIds.length > 1) {
+      try {
+        setError('🖼️ Generating unique image variants...')
+        const res = await fetch('/api/upload/uniquify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrls: extraImages, count: selectedAccountIds.length }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          imageVariants = data.variants || []
+        }
+      } catch {}
+      setError('')
+    }
+
     const results: any[] = []
     for (let i = 0; i < selectedAccountIds.length; i++) {
       const accountId = selectedAccountIds[i]
       const caption = getCaptionForAccount(i)
+      // Use unique images per account, fallback to originals
+      const mediaUrls = imageVariants[i] || extraImages
       setPostProgress(i + 1)
       try {
         const res = await fetch('/api/post/threads', {
@@ -172,7 +192,7 @@ export default function ContentThreadsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             caption, accountId, platform: 'threads',
-            mediaUrls: extraImages,
+            mediaUrls,
             scheduleTime: scheduleMode && scheduleTime ? new Date(scheduleTime).toISOString() : undefined,
           }),
         })
