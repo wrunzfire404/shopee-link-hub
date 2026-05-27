@@ -20,6 +20,7 @@ const DEFAULT_DATA: LinksData = {
   },
   links: [],
   categories: ['Fashion', 'Beauty', 'Electronics', 'Home', 'Food', 'Other'],
+  slugs: [],
   analytics: {
     totalClicks: 0,
     totalLinks: 0,
@@ -119,7 +120,7 @@ export async function saveLinksData(data: LinksData): Promise<void> {
 export async function getActiveLinks(): Promise<LinkItem[]> {
   const data = await getLinksData()
   return data.links
-    .filter(link => link.isActive)
+    .filter(link => link.isActive && !link.slug) // Root page shows links without slug
     .sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1
       if (!a.isPinned && b.isPinned) return 1

@@ -9,6 +9,7 @@ export interface LinkItem {
   originalPrice?: string
   discount?: string
   category?: string
+  slug?: string  // which page this link belongs to (e.g. "sasha", "outfitku")
   isActive: boolean
   isPinned: boolean
   clicks: number
@@ -44,6 +45,7 @@ export interface LinksData {
   config: SiteConfig
   links: LinkItem[]
   categories: string[]
+  slugs: string[]  // available page slugs (e.g. ["sasha", "outfitku"])
   analytics: AnalyticsSummary
 }
 

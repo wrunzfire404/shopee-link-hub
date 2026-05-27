@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 
-// Free imgbb API key (public, 32MB limit per image)
-const IMGBB_API_KEY = process.env.IMGBB_API_KEY || '367e08a72ed929e71be498f74c02cbe7'
-
-// Allow larger uploads (up to 10MB)
+export const runtime = 'nodejs'
 export const maxDuration = 30
 
-export const runtime = 'nodejs'
-
-// POST - upload file
+// POST - upload image file
 export async function POST(request: NextRequest) {
   const authenticated = await isAuthenticated()
   if (!authenticated) {
@@ -25,27 +20,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.type.startsWith('video/')) {
-      return NextResponse.json({ error: 'Video upload: paste a direct video URL instead (e.g. from Google Drive or Dropbox)' }, { status: 422 })
+      return NextResponse.json({ error: 'Video: paste direct URL instead (Google Drive, Dropbox)' }, { status: 422 })
     }
 
     if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'Only images are supported for upload' }, { status: 400 })
+      return NextResponse.json({ error: 'Only images supported' }, { status: 400 })
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
+      return NextResponse.json({ error: 'Max 10MB' }, { status: 400 })
     }
 
     // Convert to base64
     const bytes = await file.arrayBuffer()
     const base64 = Buffer.from(bytes).toString('base64')
 
-    // Upload to imgbb using URLSearchParams (most compatible)
+    // Try freeimage.host (no API key needed, use default key "6d207e02198a847aa98d0a2a901485a5")
     const params = new URLSearchParams()
-    params.append('key', IMGBB_API_KEY)
-    params.append('image', base64)
+    params.append('key', '6d207e02198a847aa98d0a2a901485a5')
+    params.append('action', 'upload')
+    params.append('source', base64)
+    params.append('format', 'json')
 
-    const res = await fetch('https://api.imgbb.com/1/upload', {
+    const res = await fetch('https://freeimage.host/api/1/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
@@ -53,17 +50,32 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json()
 
-    if (!res.ok || !data.success) {
-      console.error('imgbb response:', JSON.stringify(data))
-      return NextResponse.json(
-        { error: 'Image host rejected the upload', detail: data.error?.message || 'Unknown error' },
-        { status: 500 }
-      )
+    if (data.status_code === 200 && data.image?.url) {
+      return NextResponse.json({ url: data.image.url })
     }
 
-    return NextResponse.json({ url: data.data.display_url || data.data.url })
+    // Fallback: try imgbb with environment key
+    const imgbbKey = process.env.IMGBB_API_KEY
+    if (imgbbKey) {
+      const imgbbParams = new URLSearchParams()
+      imgbbParams.append('key', imgbbKey)
+      imgbbParams.append('image', base64)
+
+      const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: imgbbParams.toString(),
+      })
+      const imgbbData = await imgbbRes.json()
+      if (imgbbData.success) {
+        return NextResponse.json({ url: imgbbData.data.display_url || imgbbData.data.url })
+      }
+    }
+
+    console.error('Upload failed, response:', JSON.stringify(data))
+    return NextResponse.json({ error: 'Upload failed', detail: data.error?.message || data.status_txt || 'Unknown' }, { status: 500 })
   } catch (err: any) {
     console.error('Upload exception:', err)
-    return NextResponse.json({ error: 'Upload failed', message: err.message }, { status: 500 })
+    return NextResponse.json({ error: 'Upload error', message: err.message }, { status: 500 })
   }
 }

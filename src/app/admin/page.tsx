@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '', description: '', url: '', price: '',
-    originalPrice: '', discount: '', category: '', imageUrl: '',
+    originalPrice: '', discount: '', category: '', imageUrl: '', slug: '',
   })
   // Site settings form
   const [siteForm, setSiteForm] = useState({
@@ -197,11 +197,12 @@ export default function AdminPage() {
       discount: link.discount || '',
       category: link.category || '',
       imageUrl: link.imageUrl || '',
+      slug: link.slug || '',
     })
   }
 
   function resetForm() {
-    setFormData({ title: '', description: '', url: '', price: '', originalPrice: '', discount: '', category: '', imageUrl: '' })
+    setFormData({ title: '', description: '', url: '', price: '', originalPrice: '', discount: '', category: '', imageUrl: '', slug: '' })
   }
 
   function toggleSelect(id: string) {
@@ -390,7 +391,7 @@ export default function AdminPage() {
                   <h3 className="font-semibold">Tambah Link Baru</h3>
                   <button onClick={() => setShowAddForm(false)} className="text-[var(--text-secondary)] hover:text-white"><X className="w-5 h-5" /></button>
                 </div>
-                <LinkForm formData={formData} setFormData={setFormData} categories={data?.categories || []} onSubmit={handleAdd} submitLabel="Simpan" />
+                <LinkForm formData={formData} setFormData={setFormData} categories={data?.categories || []} data={data} onSubmit={handleAdd} submitLabel="Simpan" />
               </div>
             )}
 
@@ -408,7 +409,7 @@ export default function AdminPage() {
                 <div key={link.id} className={`bg-[var(--bg-card)] border rounded-xl p-3 ${!link.isActive ? 'border-red-900/50 opacity-60' : link.isPinned ? 'border-yellow-600/50' : 'border-[var(--border)]'}`}>
                   {editingId === link.id ? (
                     <div>
-                      <LinkForm formData={formData} setFormData={setFormData} categories={data?.categories || []} onSubmit={() => handleUpdate(link.id)} submitLabel="Update" />
+                      <LinkForm formData={formData} setFormData={setFormData} categories={data?.categories || []} data={data} onSubmit={() => handleUpdate(link.id)} submitLabel="Update" />
                       <button onClick={() => { setEditingId(null); resetForm() }} className="mt-2 w-full py-2 text-sm text-[var(--text-secondary)] hover:text-white">Cancel</button>
                     </div>
                   ) : (
@@ -536,12 +537,32 @@ function SocialInput({ label, value, onChange, placeholder }: { label: string; v
   )
 }
 
-function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: {
-  formData: any; setFormData: (d: any) => void; categories: string[]; onSubmit: () => void; submitLabel: string
+function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, data }: {
+  formData: any; setFormData: (d: any) => void; categories: string[]; onSubmit: () => void; submitLabel: string; data: any
 }) {
   const [fetching, setFetching] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [productPageUrl, setProductPageUrl] = useState('')
+  const [optimizing, setOptimizing] = useState(false)
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([])
+
+  async function handleOptimizeName() {
+    if (!formData.title) return
+    setOptimizing(true)
+    setNameSuggestions([])
+    try {
+      const res = await fetch('/api/ai/optimize-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ originalName: formData.title }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setNameSuggestions(data.suggestions || [])
+      }
+    } catch {}
+    setOptimizing(false)
+  }
 
   async function handleResolveLink() {
     if (!formData.url) return
@@ -605,7 +626,22 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
         )}
       </div>
 
-      <input type="text" placeholder="Nama Produk *" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+      {/* Product Name + AI Optimize */}
+      <div className="flex gap-2">
+        <input type="text" placeholder="Nama Produk *" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="flex-1 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+        {formData.title && (
+          <button type="button" onClick={handleOptimizeName} disabled={optimizing} className="px-2.5 py-2 bg-purple-600/20 border border-purple-500/30 text-purple-300 text-[10px] font-medium rounded-lg hover:bg-purple-600/30 disabled:opacity-50 whitespace-nowrap">
+            {optimizing ? '⏳' : '✨ AI Name'}
+          </button>
+        )}
+      </div>
+      {nameSuggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {nameSuggestions.map((s, i) => (
+            <button key={i} type="button" onClick={() => { setFormData({...formData, title: s}); setNameSuggestions([]) }} className="px-2 py-1 bg-purple-500/10 border border-purple-500/20 rounded text-[11px] text-purple-300 hover:bg-purple-500/20 transition-colors">{s}</button>
+          ))}
+        </div>
+      )}
 
       {/* Image Section */}
       <div>
@@ -638,10 +674,14 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
         <input type="text" placeholder="Harga Asli" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
         <input type="text" placeholder="Diskon" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm outline-none">
           <option value="">No Category</option>
           {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
+        <select value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm outline-none">
+          <option value="">All Pages</option>
+          {(data?.slugs || []).map((s: string) => <option key={s} value={s}>/{s}</option>)}
         </select>
         <input type="text" placeholder="Deskripsi singkat" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       </div>

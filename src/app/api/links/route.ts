@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     originalPrice: body.originalPrice || '',
     discount: body.discount || '',
     category: body.category || '',
+    slug: body.slug || '',
     isActive: body.isActive ?? true,
     isPinned: body.isPinned ?? false,
     clicks: 0,
