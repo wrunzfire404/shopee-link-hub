@@ -13,6 +13,9 @@ type PostStatus = 'idle' | 'generating' | 'ready' | 'posting' | 'posted' | 'erro
 export default function ContentCreatorPage() {
   const router = useRouter()
   const [products, setProducts] = useState<LinkItem[]>([])
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [selectedAccount, setSelectedAccount] = useState<string>('')
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('threads')
   const [selectedProduct, setSelectedProduct] = useState<LinkItem | null>(null)
   const [caption, setCaption] = useState('')
   const [style, setStyle] = useState<'review' | 'promo' | 'story'>('review')
@@ -27,8 +30,25 @@ export default function ContentCreatorPage() {
 
   useEffect(() => {
     loadProducts()
+    loadAccounts()
   }, [])
 
+  async function loadAccounts() {
+    try {
+      const res = await fetch('/api/wahdx/accounts')
+      if (res.ok) {
+        const data = await res.json()
+        const accs = data.data || []
+        setAccounts(accs)
+        // Auto-select threads account if available
+        const threadsAcc = accs.find((a: any) => a.platform === 'threads')
+        if (threadsAcc) {
+          setSelectedAccount(threadsAcc.accountId)
+          setSelectedPlatform('threads')
+        }
+      }
+    } catch {}
+  }
   async function loadProducts() {
     const res = await fetch('/api/links')
     if (res.status === 401) { router.push('/admin/login'); return }
@@ -107,7 +127,7 @@ export default function ContentCreatorPage() {
   }
 
   async function postToThreads() {
-    if (!caption) return
+    if (!caption || !selectedAccount) return
     setStatus('posting')
     setError('')
 
@@ -118,6 +138,8 @@ export default function ContentCreatorPage() {
         body: JSON.stringify({
           caption,
           mediaUrls: extraImages.length > 0 ? extraImages : undefined,
+          accountId: selectedAccount,
+          platform: selectedPlatform,
           scheduleTime: scheduleMode && scheduleTime ? new Date(scheduleTime).toISOString() : undefined,
         }),
       })
@@ -267,6 +289,31 @@ export default function ContentCreatorPage() {
                 </label>
               </div>
             </div>
+
+            {/* Account Selector */}
+            {accounts.length > 0 && (
+              <div>
+                <label className="text-xs text-gray-400 mb-2 block">Post ke akun</label>
+                <div className="flex gap-2 flex-wrap">
+                  {accounts.map((acc: any) => (
+                    <button
+                      key={acc.accountId}
+                      onClick={() => { setSelectedAccount(acc.accountId); setSelectedPlatform(acc.platform) }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs border transition-colors ${
+                        selectedAccount === acc.accountId
+                          ? 'bg-orange-500/20 border-orange-500/50 text-orange-300'
+                          : 'bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-gray-500'
+                      }`}
+                    >
+                      {acc.avatar_url && <img src={acc.avatar_url} className="w-5 h-5 rounded-full" alt="" />}
+                      <span>{acc.platform === 'threads' ? '🧵' : acc.platform === 'instagram' ? '📸' : acc.platform === 'tiktok' ? '🎵' : '👥'}</span>
+                      <span>{acc.username}</span>
+                      <span className="text-gray-600">({acc.platform})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Schedule */}
             <div className="flex items-center gap-3">

@@ -15,20 +15,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Wahdx API key not configured' }, { status: 500 })
   }
 
-  const { caption, mediaUrls, accountId, scheduleTime } = await request.json()
+  const { caption, mediaUrls, accountId, platform, scheduleTime } = await request.json()
 
   if (!caption) {
     return NextResponse.json({ error: 'Caption is required' }, { status: 400 })
   }
 
+  if (!accountId) {
+    return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
+  }
+
   try {
+    const platformName = platform || 'threads'
+
     const payload: any = {
-      platform: 'threads',
-      accountId: accountId || process.env.WAHDX_THREADS_ACCOUNT_ID || '',
+      platform: platformName,
+      accountId,
       content: caption,
-      threadsSettings: {
-        who_can_reply: 'everyone',
-      },
+    }
+
+    // Platform-specific settings
+    if (platformName === 'threads') {
+      payload.threadsSettings = { who_can_reply: 'everyone' }
+    } else if (platformName === 'instagram') {
+      payload.instagramSettings = {}
+    } else if (platformName === 'tiktok') {
+      payload.tiktokSettings = { privacy_level: 'PUBLIC_TO_EVERYONE', allow_comment: true, auto_add_music: true }
+    } else if (platformName === 'facebook') {
+      payload.facebookSettings = {}
     }
 
     // Add media if provided
