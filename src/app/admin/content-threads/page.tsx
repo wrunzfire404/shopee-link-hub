@@ -328,21 +328,34 @@ export default function ContentThreadsPage() {
               </>
             )}
 
-            {/* Images */}
+            {/* Images & Video */}
             <div>
               <label className="text-xs text-gray-400 mb-2 block">Media ({extraImages.length})</label>
               <div className="flex gap-2 flex-wrap">
-                {extraImages.map((img, i) => (
+                {extraImages.map((url, i) => (
                   <div key={i} className="relative">
-                    <img src={img} alt="" className="w-14 h-14 object-cover rounded-lg border border-[#333]" />
+                    {url.match(/\.(mp4|mov|webm|avi)$/i) || url.includes('video') ? (
+                      <div className="w-14 h-14 bg-[#222] rounded-lg border border-[#333] flex items-center justify-center">
+                        <span className="text-lg">🎬</span>
+                      </div>
+                    ) : (
+                      <img src={url} alt="" className="w-14 h-14 object-cover rounded-lg border border-[#333]" />
+                    )}
                     <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center">✕</button>
                   </div>
                 ))}
-                <label className="w-14 h-14 bg-[#1a1a1a] border border-dashed border-[#444] rounded-lg flex items-center justify-center cursor-pointer hover:border-orange-500/50">
-                  <span className="text-gray-500 text-lg">{uploading ? '⏳' : '+'}</span>
+                <label className="w-14 h-14 bg-[#1a1a1a] border border-dashed border-[#444] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-orange-500/50 gap-0.5">
+                  <span className="text-gray-500 text-xs">{uploading ? '⏳' : '📷'}</span>
+                  <span className="text-[9px] text-gray-600">img</span>
                   <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
                 </label>
+                <label className="w-14 h-14 bg-[#1a1a1a] border border-dashed border-[#444] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 gap-0.5">
+                  <span className="text-gray-500 text-xs">{uploading ? '⏳' : '🎬'}</span>
+                  <span className="text-[9px] text-gray-600">video</span>
+                  <input type="file" accept="video/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
+                </label>
               </div>
+              <p className="text-[10px] text-gray-600 mt-1">Gambar max 2MB • Video max 50MB</p>
             </div>
 
             {/* Schedule */}

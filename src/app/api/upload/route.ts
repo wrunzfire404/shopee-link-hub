@@ -17,13 +17,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate file type
-  if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'File must be an image' }, { status: 400 })
+  if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+    return NextResponse.json({ error: 'File must be an image or video' }, { status: 400 })
   }
 
-  // Validate file size (max 2MB)
-  if (file.size > 2 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File too large (max 2MB)' }, { status: 400 })
+  // Validate file size (max 50MB for video, 2MB for image)
+  const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 2 * 1024 * 1024
+  if (file.size > maxSize) {
+    return NextResponse.json({ error: `File too large (max ${file.type.startsWith('video/') ? '50MB' : '2MB'})` }, { status: 400 })
   }
 
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
