@@ -3,46 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #151515;
-  --bg-card: #1a1a1a;
-  --text-primary: #ffffff;
-  --text-secondary: #888888;
   --accent: #ee4d2d;
-  --accent-hover: #d73211;
-  --success: #22c55e;
-  --border: #2a2a2a;
+  --accent-light: #ff6b4a;
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background: #fafafa;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Smooth animations */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* Pulse glow animation */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.5; }
+/* Admin pages override to dark */
+.admin-dark {
+  background: #0f0f0f;
+  color: #ffffff;
 }
