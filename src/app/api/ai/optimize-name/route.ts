@@ -20,24 +20,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'originalName required' }, { status: 400 })
   }
 
-  const prompt = `Kamu copywriter e-commerce Indonesia yang jago bikin nama produk pendek & catchy.
+  const prompt = `Kamu senior marketing agent dengan pengalaman 10 tahun di e-commerce Indonesia. Kamu tau persis nama produk seperti apa yang bikin orang klik dan beli.
 
-TUGAS: Dari nama produk Shopee yang panjang, bikin 3 nama pendek yang bikin orang pengen klik.
+Dari nama produk ini: "${originalName}"
 
-RULES:
-- Max 4-5 kata
-- Boleh campur bahasa Indonesia + Inggris
-- JANGAN selalu pakai kata "viral", "premium", "must have", "wajib punya", "best seller" — itu udah overused
-- Kreatiflah! Pakai angle berbeda tiap opsi:
-  - Opsi 1: Fokus benefit/keunggulan (misal: "Tanktop Anti Gerah")
-  - Opsi 2: Fokus vibe/aesthetic (misal: "Daily Outfit Adem")  
-  - Opsi 3: Fokus urgency/desire (misal: "Tanktop 50rb Sold 1000+")
-- Hapus brand noname, ukuran, keyword spam
-- Bikin kedengeran kayak judul TikTok/Reels yang orang klik
+Bikin 3 alternatif nama yang lebih menjual. Bebas berkreasi, yang penting:
+- Tetep sesuai produknya
+- Pendek (max 5 kata)
+- Bikin orang penasaran/pengen beli
 
-FORMAT: 3 nama dipisah newline. Langsung nama aja.
-
-Nama asli: "${originalName}"`
+3 nama, pisah newline. Langsung aja.`
 
   try {
     const res = await fetch(AI_API_URL, {
