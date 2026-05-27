@@ -79,6 +79,17 @@ export default function ContentThreadsPage() {
     setPostResults([])
   }
 
+  function getProductSlugNumber(): number {
+    if (!selectedProduct) return 1
+    // Get all active products in the same slug, sorted by number
+    const slug = selectedProduct.slug || ''
+    const sameSlugProducts = products
+      .filter(p => p.isActive && (p.slug || '') === slug)
+      .sort((a, b) => a.number - b.number)
+    const idx = sameSlugProducts.findIndex(p => p.id === selectedProduct.id)
+    return idx >= 0 ? idx + 1 : 1
+  }
+
   async function generateCaption() {
     if (!selectedProduct) return
     setStatus('generating')
@@ -91,7 +102,7 @@ export default function ContentThreadsPage() {
         body: JSON.stringify({
           productName: selectedProduct.title, price: selectedProduct.price,
           discount: selectedProduct.discount, description: selectedProduct.description,
-          platform: 'Threads', style, linkNumber: selectedProduct.number,
+          platform: 'Threads', style, linkNumber: getProductSlugNumber(),
         }),
       })
       if (!res.ok) { setError('AI generation failed'); setStatus('idle'); return }
@@ -234,7 +245,7 @@ export default function ContentThreadsPage() {
                     {product.imageUrl ? <img src={product.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover" /> : <div className="w-12 h-12 bg-[#222] rounded-lg flex items-center justify-center"><ImageIcon className="w-5 h-5 text-gray-500" /></div>}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{product.title}</p>
-                      <p className="text-xs text-gray-500">{product.price} {product.discount} • Bio nomer {product.number}</p>
+                      <p className="text-xs text-gray-500">{product.price} {product.discount} • Nomer {product.number}</p>
                     </div>
                   </button>
                 ))}
@@ -248,7 +259,7 @@ export default function ContentThreadsPage() {
               {selectedProduct.imageUrl && <img src={selectedProduct.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover" />}
               <div className="flex-1">
                 <p className="font-medium text-sm">{selectedProduct.title}</p>
-                <p className="text-xs text-orange-400">{selectedProduct.price} {selectedProduct.discount} • Bio nomer {selectedProduct.number}</p>
+                <p className="text-xs text-orange-400">{selectedProduct.price} {selectedProduct.discount} • Bio nomer {getProductSlugNumber()}</p>
               </div>
               <button onClick={() => { setSelectedProduct(null); setBaseCaption(''); setVariations([]); setStatus('idle'); setPostResults([]) }} className="text-xs text-gray-500 hover:text-white">Ganti</button>
             </div>
