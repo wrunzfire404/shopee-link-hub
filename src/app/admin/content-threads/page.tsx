@@ -245,7 +245,7 @@ export default function ContentThreadsPage() {
                     {product.imageUrl ? <img src={product.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover" /> : <div className="w-12 h-12 bg-[#222] rounded-lg flex items-center justify-center"><ImageIcon className="w-5 h-5 text-gray-500" /></div>}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{product.title}</p>
-                      <p className="text-xs text-gray-500">{product.price} {product.discount} • Nomer {product.number}</p>
+                      <p className="text-xs text-gray-500">{product.price} {product.discount} {product.slug ? <span className="text-purple-400">• /{product.slug}</span> : <span className="text-gray-600">• root</span>}</p>
                     </div>
                   </button>
                 ))}
