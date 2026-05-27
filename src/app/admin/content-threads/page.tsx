@@ -406,7 +406,7 @@ export default function ContentThreadsPage() {
                   <div key={i} className={`flex items-center gap-2 text-xs py-1 ${r.success ? 'text-green-400' : 'text-red-400'}`}>
                     {r.success ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     <span>@{r.username}</span>
-                    <span className="text-gray-600">{r.success ? '✓' : `✗ ${r.data?.error || r.data?.detail?.error || JSON.stringify(r.data).slice(0, 100)}`}</span>
+                    <span className="text-gray-600">{r.success ? '✓' : `✗ ${r.data?.error || ''} ${r.data?.detail ? JSON.stringify(r.data.detail).slice(0, 150) : r.data?.message || ''}`}</span>
                   </div>
                 ))}
               </div>

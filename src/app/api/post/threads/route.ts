@@ -64,10 +64,17 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(payload),
     })
 
-    const data = await res.json()
+    const responseText = await res.text()
+    let data: any
+    try { data = JSON.parse(responseText) } catch { data = { raw: responseText } }
 
     if (!res.ok) {
-      return NextResponse.json({ error: 'Wahdx post failed', detail: data }, { status: res.status })
+      return NextResponse.json({
+        error: 'Wahdx post failed',
+        status: res.status,
+        detail: data,
+        payload: { ...payload, content: payload.content?.slice(0, 50) + '...' }
+      }, { status: res.status })
     }
 
     return NextResponse.json({
@@ -76,6 +83,6 @@ export async function POST(request: NextRequest) {
       data,
     })
   } catch (err: any) {
-    return NextResponse.json({ error: 'Post failed', message: err.message }, { status: 500 })
+    return NextResponse.json({ error: 'Post failed', message: err.message, stack: err.stack?.slice(0, 200) }, { status: 500 })
   }
 }
