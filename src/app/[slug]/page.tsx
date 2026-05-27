@@ -71,7 +71,7 @@ export default async function SlugPage({ params }: { params: { slug: string } })
                 <p className="text-gray-400 text-sm">Belum ada produk di halaman ini</p>
               </div>
             ) : (
-              links.map((link) => <PublicLinkCard key={link.id} link={link} />)
+              links.map((link, index) => <PublicLinkCard key={link.id} link={{...link, number: index + 1}} />)
             )}
           </div>
         </div>

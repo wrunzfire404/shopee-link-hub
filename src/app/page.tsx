@@ -82,8 +82,8 @@ export default async function HomePage() {
                 <p className="text-gray-400 text-sm">Belum ada produk</p>
               </div>
             ) : (
-              links.map((link) => (
-                <PublicLinkCard key={link.id} link={link} />
+              links.map((link, index) => (
+                <PublicLinkCard key={link.id} link={{...link, number: index + 1}} />
               ))
             )}
           </div>
