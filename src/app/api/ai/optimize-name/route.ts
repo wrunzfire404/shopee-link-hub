@@ -20,19 +20,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'originalName required' }, { status: 400 })
   }
 
-  const prompt = `Kamu product naming expert untuk social media marketing Indonesia.
+  const prompt = `Kamu copywriter e-commerce Indonesia yang jago bikin nama produk pendek & catchy.
 
-TUGAS: Dari nama produk Shopee yang panjang & kaku, bikin nama pendek yang catchy, viral-worthy, dan bikin orang pengen klik.
+TUGAS: Dari nama produk Shopee yang panjang, bikin 3 nama pendek yang bikin orang pengen klik.
 
 RULES:
-- Max 5-6 kata aja
-- Bahasa Indonesia/campur Inggris natural
-- Tambahin power words: "Viral", "Premium", "Best Seller", "Lagi Hits", "Must Have", "Wajib Punya"
-- Hapus keyword spam (ukuran, brand noname, category repetitif)
-- Bikin kedengeran desirable, bukan deskriptif
-- JANGAN pake tanda | atau /
+- Max 4-5 kata
+- Boleh campur bahasa Indonesia + Inggris
+- JANGAN selalu pakai kata "viral", "premium", "must have", "wajib punya", "best seller" — itu udah overused
+- Kreatiflah! Pakai angle berbeda tiap opsi:
+  - Opsi 1: Fokus benefit/keunggulan (misal: "Tanktop Anti Gerah")
+  - Opsi 2: Fokus vibe/aesthetic (misal: "Daily Outfit Adem")  
+  - Opsi 3: Fokus urgency/desire (misal: "Tanktop 50rb Sold 1000+")
+- Hapus brand noname, ukuran, keyword spam
+- Bikin kedengeran kayak judul TikTok/Reels yang orang klik
 
-Kasih 3 opsi dipisah newline. LANGSUNG nama aja tanpa numbering atau penjelasan.
+FORMAT: 3 nama dipisah newline. Langsung nama aja.
 
 Nama asli: "${originalName}"`
 
