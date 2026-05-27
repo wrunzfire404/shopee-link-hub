@@ -10,90 +10,107 @@ export default async function HomePage() {
   const socials = data.config.socialLinks
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50">
-      {/* Decorative blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-orange-200/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-200/20 rounded-full blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-[#FFF5F0] relative overflow-hidden">
+      {/* === DECORATIVE ELEMENTS === */}
+      {/* Top wave/ribbon */}
+      <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-[#ee4d2d] to-[#ff7849] rounded-b-[60px]" />
+      
+      {/* Floating circles */}
+      <div className="absolute top-12 left-6 w-20 h-20 bg-white/10 rounded-full" />
+      <div className="absolute top-32 right-8 w-14 h-14 bg-white/10 rounded-full" />
+      <div className="absolute top-8 right-24 w-8 h-8 bg-white/20 rounded-full" />
+      <div className="absolute top-44 left-16 w-6 h-6 bg-white/15 rounded-full" />
+      
+      {/* Sparkle dots */}
+      <div className="absolute top-20 left-1/3 w-2 h-2 bg-yellow-300/80 rounded-full" />
+      <div className="absolute top-36 right-1/3 w-1.5 h-1.5 bg-yellow-200/80 rounded-full" />
+      <div className="absolute top-16 right-16 w-2.5 h-2.5 bg-white/50 rounded-full" />
 
-      <div className="relative max-w-md mx-auto px-5 py-10">
-        {/* Profile Card */}
-        <div className="text-center mb-8">
-          {/* Avatar */}
-          <div className="inline-block mb-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-[var(--accent)] to-orange-400 rounded-[22px] flex items-center justify-center shadow-lg shadow-orange-200/50 rotate-3 hover:rotate-0 transition-transform duration-300">
-              <span className="text-3xl">🛍️</span>
+      {/* Bottom decorative */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-orange-50 to-transparent" />
+      <div className="absolute bottom-10 left-8 w-24 h-24 bg-orange-100/50 rounded-full blur-2xl" />
+      <div className="absolute bottom-20 right-6 w-32 h-32 bg-pink-100/40 rounded-full blur-2xl" />
+
+      {/* === CONTENT === */}
+      <div className="relative max-w-md mx-auto px-5 pt-8 pb-12">
+        {/* Profile Section (on colored header) */}
+        <div className="text-center mb-6 pt-4">
+          {/* Avatar with white border */}
+          <div className="inline-block mb-3">
+            <div className="w-[72px] h-[72px] bg-white rounded-full flex items-center justify-center shadow-lg ring-4 ring-white/30">
+              <span className="text-3xl">🛒</span>
             </div>
           </div>
 
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-lg font-bold text-white drop-shadow-sm">
             {data.config.name}
           </h1>
-          <p className="text-gray-500 text-sm mt-1 max-w-[280px] mx-auto leading-relaxed">
+          <p className="text-white/80 text-xs mt-1 max-w-[260px] mx-auto">
             {data.config.description}
           </p>
 
-          {/* Social pills */}
+          {/* Social row */}
           {socials && Object.values(socials).some(v => v) && (
-            <div className="flex justify-center flex-wrap gap-2 mt-4">
-              {socials.tiktok && <SocialPill href={socials.tiktok} emoji="🎵" label="TikTok" />}
-              {socials.instagram && <SocialPill href={socials.instagram} emoji="📸" label="Instagram" />}
-              {socials.facebook && <SocialPill href={socials.facebook} emoji="👤" label="Facebook" />}
-              {socials.threads && <SocialPill href={socials.threads} emoji="🧵" label="Threads" />}
-              {socials.whatsapp && <SocialPill href={socials.whatsapp} emoji="💬" label="WhatsApp" />}
+            <div className="flex justify-center gap-2 mt-3">
+              {socials.tiktok && <SocialBubble href={socials.tiktok} emoji="🎵" />}
+              {socials.instagram && <SocialBubble href={socials.instagram} emoji="📸" />}
+              {socials.facebook && <SocialBubble href={socials.facebook} emoji="👥" />}
+              {socials.threads && <SocialBubble href={socials.threads} emoji="🧵" />}
+              {socials.whatsapp && <SocialBubble href={socials.whatsapp} emoji="💬" />}
             </div>
           )}
         </div>
 
-        {/* Product count */}
-        {links.length > 0 && (
-          <div className="flex items-center gap-2 mb-4 px-1">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Produk Pilihan</span>
-            <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] font-semibold px-2 py-0.5 rounded-full">{links.length}</span>
+        {/* Product Section Card */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-orange-900/5 px-4 pt-5 pb-4 border border-orange-100/50">
+          {/* Section header with ribbon style */}
+          {links.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-1.5 bg-[#ee4d2d] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
+                <span>🔥</span>
+                <span>PRODUK PILIHAN</span>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-orange-200 to-transparent" />
+            </div>
+          )}
+
+          {/* Product List */}
+          <div className="space-y-2.5">
+            {links.length === 0 ? (
+              <div className="text-center py-12">
+                <span className="text-4xl block mb-2">📦</span>
+                <p className="text-gray-400 text-sm">Belum ada produk</p>
+              </div>
+            ) : (
+              links.map((link) => (
+                <PublicLinkCard key={link.id} link={link} />
+              ))
+            )}
           </div>
-        )}
-
-        {/* Product List */}
-        <div className="space-y-3">
-          {links.length === 0 ? (
-            <div className="text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-100">
-              <span className="text-4xl mb-3 block">🛒</span>
-              <p className="text-gray-400 text-sm">Belum ada produk tersedia</p>
-            </div>
-          ) : (
-            links.map((link) => (
-              <PublicLinkCard key={link.id} link={link} />
-            ))
-          )}
         </div>
 
-        {/* Footer */}
+        {/* Footer badge */}
         {data.config.footerText && (
-          <div className="text-center mt-10">
-            <p className="text-xs text-gray-400">{data.config.footerText}</p>
+          <div className="text-center mt-6">
+            <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 bg-white/80 px-3 py-1.5 rounded-full border border-gray-100">
+              ✅ {data.config.footerText}
+            </span>
           </div>
         )}
-
-        {/* Powered by */}
-        <div className="text-center mt-4">
-          <p className="text-[10px] text-gray-300">⚡ Powered by Shopee Link Hub</p>
-        </div>
       </div>
     </main>
   )
 }
 
-function SocialPill({ href, emoji, label }: { href: string; emoji: string; label: string }) {
+function SocialBubble({ href, emoji }: { href: string; emoji: string }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener"
-      className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-100 rounded-full text-xs text-gray-600 hover:border-[var(--accent)]/30 hover:text-[var(--accent)] shadow-sm hover:shadow transition-all duration-200"
+      className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
     >
-      <span>{emoji}</span>
-      <span className="font-medium">{label}</span>
+      <span className="text-sm">{emoji}</span>
     </a>
   )
 }
