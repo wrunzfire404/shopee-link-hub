@@ -145,9 +145,10 @@ export default function ContentThreadsPage() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      const res = await fetch('/api/upload/media', { method: 'POST', body: form })
       if (res.ok) { const { url } = await res.json(); setExtraImages(prev => [...prev, url]) }
-    } catch {}
+      else { const err = await res.json(); alert(err.error || 'Upload failed') }
+    } catch { alert('Upload failed') }
     setUploading(false)
     e.target.value = ''
   }
