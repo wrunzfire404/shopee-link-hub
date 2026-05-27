@@ -9,43 +9,58 @@ export default async function HomePage() {
   const data = await getLinksData()
   const links = await getActiveLinks()
 
+  const socials = data.config.socialLinks
+
   return (
-    <main className="min-h-screen bg-[var(--bg-primary)] py-8 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#111111] to-[#0a0a0a] py-10 px-4">
       <div className="max-w-md mx-auto">
-        {/* Header */}
+        {/* Profile Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[var(--accent)]/20">
-            <ShoppingBag className="w-10 h-10 text-white" />
+          {/* Avatar with glow */}
+          <div className="relative inline-block mb-4">
+            <div className="absolute inset-0 bg-[var(--accent)] rounded-full blur-xl opacity-30 animate-pulse" />
+            <div className="relative w-24 h-24 bg-gradient-to-br from-[var(--accent)] to-orange-700 rounded-full flex items-center justify-center shadow-2xl ring-2 ring-white/10">
+              <ShoppingBag className="w-11 h-11 text-white" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">
+
+          <h1 className="text-2xl font-bold text-white tracking-tight">
             {data.config.name}
           </h1>
-          <p className="text-[var(--text-secondary)] mt-1 text-sm">
+          <p className="text-[var(--text-secondary)] mt-1.5 text-sm max-w-xs mx-auto">
             {data.config.description}
           </p>
 
-          {/* Social Links */}
-          {data.config.socialLinks && (
-            <div className="flex justify-center gap-3 mt-3">
-              {data.config.socialLinks.tiktok && (
-                <a href={data.config.socialLinks.tiktok} target="_blank" rel="noopener" className="text-[var(--text-secondary)] hover:text-white text-xs transition-colors">TikTok</a>
-              )}
-              {data.config.socialLinks.instagram && (
-                <a href={data.config.socialLinks.instagram} target="_blank" rel="noopener" className="text-[var(--text-secondary)] hover:text-white text-xs transition-colors">Instagram</a>
-              )}
-              {data.config.socialLinks.facebook && (
-                <a href={data.config.socialLinks.facebook} target="_blank" rel="noopener" className="text-[var(--text-secondary)] hover:text-white text-xs transition-colors">Facebook</a>
-              )}
+          {/* Social links */}
+          {socials && (Object.values(socials).some(v => v)) && (
+            <div className="flex justify-center gap-4 mt-4">
+              {socials.tiktok && <SocialIcon href={socials.tiktok} label="TikTok" icon="tiktok" />}
+              {socials.instagram && <SocialIcon href={socials.instagram} label="IG" icon="instagram" />}
+              {socials.facebook && <SocialIcon href={socials.facebook} label="FB" icon="facebook" />}
+              {socials.threads && <SocialIcon href={socials.threads} label="Threads" icon="threads" />}
+              {socials.whatsapp && <SocialIcon href={socials.whatsapp} label="WA" icon="whatsapp" />}
             </div>
           )}
         </div>
 
+        {/* Product Count Badge */}
+        {links.length > 0 && (
+          <div className="flex justify-center mb-4">
+            <span className="text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[var(--text-secondary)]">
+              🔥 {links.length} produk tersedia
+            </span>
+          </div>
+        )}
+
         {/* Links */}
         <div className="space-y-3">
           {links.length === 0 ? (
-            <p className="text-center text-[var(--text-secondary)] py-8">
-              Belum ada produk tersedia
-            </p>
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingBag className="w-8 h-8 text-[var(--text-secondary)]" />
+              </div>
+              <p className="text-[var(--text-secondary)]">Belum ada produk tersedia</p>
+            </div>
           ) : (
             links.map((link) => (
               <LinkCard key={link.id} link={link} />
@@ -55,11 +70,31 @@ export default async function HomePage() {
 
         {/* Footer */}
         {data.config.footerText && (
-          <div className="text-center mt-10 text-sm text-[var(--text-secondary)]">
-            <p>{data.config.footerText}</p>
+          <div className="text-center mt-10 pt-6 border-t border-white/5">
+            <p className="text-xs text-[var(--text-secondary)]">{data.config.footerText}</p>
           </div>
         )}
       </div>
     </main>
+  )
+}
+
+function SocialIcon({ href, label, icon }: { href: string; label: string; icon: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener"
+      className="w-9 h-9 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full flex items-center justify-center transition-all duration-200 group"
+      title={label}
+    >
+      <span className="text-sm group-hover:scale-110 transition-transform">
+        {icon === 'tiktok' && '♪'}
+        {icon === 'instagram' && '📷'}
+        {icon === 'facebook' && 'f'}
+        {icon === 'threads' && '@'}
+        {icon === 'whatsapp' && '💬'}
+      </span>
+    </a>
   )
 }
