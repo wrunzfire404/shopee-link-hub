@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'AI API key not configured' }, { status: 500 })
   }
 
-  const { productName, price, discount, description, platform, style } = await request.json()
+  const { productName, price, discount, description, platform, style, linkNumber } = await request.json()
 
   const systemPrompt = `Kamu adalah copywriter social media Indonesia yang jago bikin caption viral. 
 Kamu nulis kayak anak muda Jakarta — santai, natural, pake bahasa sehari-hari.
@@ -30,8 +30,9 @@ RULES PENTING:
 - Short sentences, punchy
 - Max 3-4 baris aja
 - Emoji sparingly (max 2-3)
+- JANGAN masukin link apapun di caption
+- Di akhir, arahkan ke bio: "cek link di bio nomer ${linkNumber || 'X'}" atau variasi natural lainnya
 - Include 3-5 hashtag relevant di akhir
-- Kalo ada link, taruh natural di tengah atau akhir
 
 STYLE OPTIONS:
 - "review": kayak lagi review produk ke temen
@@ -46,8 +47,9 @@ OUTPUT: Langsung caption aja, gak perlu penjelasan.`
 - Diskon: ${discount || 'tidak ada'}
 - Deskripsi: ${description || 'tidak ada'}
 - Style: ${style || 'review'}
+- Nomer di bio: ${linkNumber || '1'}
 
-Ingat: hook kuat di awal, bahasa natural kayak orang biasa, bukan kayak AI.`
+Ingat: hook kuat di awal, bahasa natural, TANPA link URL, arahkan ke "link di bio nomer ${linkNumber || '1'}".`
 
   try {
     const res = await fetch(AI_API_URL, {
@@ -57,7 +59,7 @@ Ingat: hook kuat di awal, bahasa natural kayak orang biasa, bukan kayak AI.`
         'Authorization': `Bearer ${AI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4',
+        model: 'anthropic/claude-opus-4.7',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
