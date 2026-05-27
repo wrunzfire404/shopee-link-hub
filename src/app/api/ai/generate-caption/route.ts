@@ -57,7 +57,7 @@ Ingat: hook kuat di awal, bahasa natural kayak orang biasa, bukan kayak AI.`
         'Authorization': `Bearer ${AI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-opus-4.7',
+        model: 'anthropic/claude-sonnet-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
