@@ -50,12 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add media (required by Wahdx)
-    // Ensure URLs have proper file extensions (Wahdx requires it)
-    payload.mediaItems = mediaUrls.map((url: string) => {
-      // If URL doesn't end with image/video extension, append .jpg
-      const hasExtension = /\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)(\?.*)?$/i.test(url)
-      return { url: hasExtension ? url : `${url}.jpg` }
-    })
+    payload.mediaItems = mediaUrls.map((url: string) => ({ url }))
 
     // Add schedule if provided
     if (scheduleTime) {

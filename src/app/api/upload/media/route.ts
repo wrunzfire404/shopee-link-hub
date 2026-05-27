@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
-import { UTApi } from 'uploadthing/server'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 30
 
-const utapi = new UTApi()
-
-// POST - upload media for Threads posting (Uploadthing, no crop, keeps original)
+// POST - upload media for Threads posting (Imgur - public URL, proper extension, Wahdx compatible)
 export async function POST(request: NextRequest) {
   const authenticated = await isAuthenticated()
   if (!authenticated) {
@@ -22,27 +19,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file' }, { status: 400 })
     }
 
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      return NextResponse.json({ error: 'Image or video only' }, { status: 400 })
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Only images supported. For video use direct URL.' }, { status: 400 })
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Max 50MB' }, { status: 400 })
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Max 10MB' }, { status: 400 })
     }
 
-    const response = await utapi.uploadFiles(file)
+    const bytes = await file.arrayBuffer()
+    const base64 = Buffer.from(bytes).toString('base64')
 
-    if (response.data?.ufsUrl) {
-      return NextResponse.json({ url: response.data.ufsUrl })
+    const res = await fetch('https://api.imgur.com/3/image', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Client-ID 546c25a59c58ad7',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ image: base64, type: 'base64' }),
+    })
+
+    const data = await res.json()
+
+    if (data.success && data.data?.link) {
+      // Imgur returns URL like https://i.imgur.com/abc.png - Wahdx compatible
+      return NextResponse.json({ url: data.data.link })
     }
 
-    if (response.data?.url) {
-      return NextResponse.json({ url: response.data.url })
-    }
-
-    return NextResponse.json({ error: 'Upload failed', detail: response.error?.message || 'Unknown' }, { status: 500 })
+    return NextResponse.json({ error: 'Upload failed', detail: data.data?.error || 'Imgur rejected' }, { status: 500 })
   } catch (err: any) {
-    console.error('Upload error:', err)
-    return NextResponse.json({ error: 'Upload failed', message: err.message }, { status: 500 })
+    return NextResponse.json({ error: 'Upload error', message: err.message }, { status: 500 })
   }
 }
