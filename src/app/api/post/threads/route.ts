@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
   }
 
+  if (!mediaUrls || mediaUrls.length === 0) {
+    return NextResponse.json({ error: 'Media is required (Wahdx/Threads needs at least 1 image)' }, { status: 400 })
+  }
+
   try {
     const platformName = platform || 'threads'
 
@@ -45,10 +49,8 @@ export async function POST(request: NextRequest) {
       payload.facebookSettings = {}
     }
 
-    // Add media if provided
-    if (mediaUrls && mediaUrls.length > 0) {
-      payload.mediaItems = mediaUrls.map((url: string) => ({ url }))
-    }
+    // Add media (required by Wahdx)
+    payload.mediaItems = mediaUrls.map((url: string) => ({ url }))
 
     // Add schedule if provided
     if (scheduleTime) {

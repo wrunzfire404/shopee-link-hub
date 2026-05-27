@@ -172,7 +172,7 @@ export default function ContentThreadsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             caption, accountId, platform: 'threads',
-            mediaUrls: extraImages.length > 0 ? extraImages : undefined,
+            mediaUrls: extraImages,
             scheduleTime: scheduleMode && scheduleTime ? new Date(scheduleTime).toISOString() : undefined,
           }),
         })
@@ -380,7 +380,7 @@ export default function ContentThreadsPage() {
             </div>
 
             {/* Post button */}
-            {baseCaption && selectedAccountIds.length > 0 && (
+            {baseCaption && selectedAccountIds.length > 0 && extraImages.length > 0 && (
               <button onClick={postToAllAccounts} disabled={status === 'posting'} className="w-full py-3 bg-[#ee4d2d] hover:bg-[#d73211] text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2">
                 {status === 'posting' ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Posting {postProgress}/{selectedAccountIds.length}...</>
@@ -393,6 +393,9 @@ export default function ContentThreadsPage() {
             )}
             {baseCaption && selectedAccountIds.length === 0 && (
               <p className="text-xs text-yellow-400 text-center">⚠️ Pilih minimal 1 akun</p>
+            )}
+            {baseCaption && selectedAccountIds.length > 0 && extraImages.length === 0 && (
+              <p className="text-xs text-yellow-400 text-center">⚠️ Wajib ada minimal 1 gambar/video (Threads requirement)</p>
             )}
             {baseCaption && selectedAccountIds.length > 1 && variations.length === 0 && (
               <p className="text-xs text-yellow-500/70 text-center">💡 Generate variasi dulu biar tiap akun dapet caption beda</p>
