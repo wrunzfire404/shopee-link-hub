@@ -361,13 +361,46 @@ export default function ContentThreadsPage() {
                   <span className="text-[9px] text-gray-600">img</span>
                   <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
                 </label>
-                <label className="w-14 h-14 bg-[#1a1a1a] border border-dashed border-[#444] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 gap-0.5">
-                  <span className="text-gray-500 text-xs">{uploading ? '⏳' : '🎬'}</span>
-                  <span className="text-[9px] text-gray-600">video</span>
-                  <input type="file" accept="video/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
-                </label>
               </div>
-              <p className="text-[10px] text-gray-600 mt-1">Gambar max 2MB • Video max 50MB</p>
+
+              {/* Video URL input */}
+              <div className="mt-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Paste video URL (Google Drive / Dropbox)"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const input = e.target as HTMLInputElement
+                        const url = input.value.trim()
+                        if (url) { setExtraImages(prev => [...prev, url]); input.value = '' }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg text-white text-xs placeholder:text-gray-600 focus:border-purple-500/50 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.querySelector('input[placeholder*="video URL"]') as HTMLInputElement
+                      const url = input?.value.trim()
+                      if (url) { setExtraImages(prev => [...prev, url]); input.value = '' }
+                    }}
+                    className="px-3 py-2 bg-purple-600/20 border border-purple-500/30 rounded-lg text-xs text-purple-300 hover:bg-purple-600/30"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <details className="mt-2">
+                  <summary className="text-[10px] text-gray-500 cursor-pointer hover:text-gray-400">💡 Cara dapetin video URL</summary>
+                  <div className="mt-1.5 text-[10px] text-gray-600 bg-[#111] rounded-lg p-2.5 space-y-1">
+                    <p><b className="text-gray-400">Google Drive:</b> Upload video → Klik kanan → Share → "Anyone with link" → Copy link → Ganti /view jadi /preview atau pakai format: https://drive.google.com/uc?export=download&id=FILE_ID</p>
+                    <p><b className="text-gray-400">Dropbox:</b> Upload → Share → Copy link → Ganti ?dl=0 jadi ?dl=1 (direct download)</p>
+                    <p><b className="text-gray-400">Direct URL:</b> URL yang berakhiran .mp4 / .mov langsung bisa dipakai</p>
+                  </div>
+                </details>
+              </div>
+
+              <p className="text-[10px] text-gray-600 mt-2">📷 Upload gambar langsung • 🎬 Video paste URL (Google Drive/Dropbox)</p>
             </div>
 
             {/* Schedule */}
