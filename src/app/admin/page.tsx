@@ -462,6 +462,37 @@ export default function AdminPage() {
         {/* ===== SETTINGS TAB ===== */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
+            {/* Pages / Slugs Management */}
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
+              <h3 className="font-semibold mb-2">Pages (Slug)</h3>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">Bikin halaman terpisah per akun. Contoh: sprinx.fun/<b>sasha</b></p>
+              <div className="flex gap-2 mb-3">
+                <input type="text" placeholder="nama-page (huruf kecil)" id="newSlugInput" className="flex-1 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
+                <button onClick={async () => {
+                  const input = document.getElementById('newSlugInput') as HTMLInputElement
+                  const val = input.value.trim()
+                  if (!val) return
+                  await fetch('/api/slugs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name: val}) })
+                  input.value = ''
+                  loadData()
+                }} className="px-4 py-2 bg-[var(--accent)] text-white text-sm rounded-lg hover:bg-[var(--accent-hover)]">Tambah</button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(data?.slugs || []).map((slug: string) => (
+                  <div key={slug} className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5">
+                    <span className="text-sm text-white">/{slug}</span>
+                    <a href={`/${slug}`} target="_blank" className="text-[10px] text-[var(--accent)]">↗</a>
+                    <button onClick={async () => {
+                      if (!confirm(`Hapus page /${slug}?`)) return
+                      await fetch('/api/slugs', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name: slug}) })
+                      loadData()
+                    }} className="text-red-400 text-xs ml-1 hover:text-red-300">✕</button>
+                  </div>
+                ))}
+                {(!data?.slugs || data.slugs.length === 0) && <p className="text-xs text-[var(--text-secondary)]">Belum ada page. Tambahin di atas.</p>}
+              </div>
+            </div>
+
             {/* Site Info */}
             <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
               <h3 className="font-semibold mb-4">Site Information</h3>
