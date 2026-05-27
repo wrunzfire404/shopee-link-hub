@@ -574,7 +574,7 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel }: 
         setFormData({ ...formData, imageUrl: url })
       } else {
         const err = await res.json()
-        alert(err.error || 'Upload failed')
+        alert(err.error + (err.detail ? ': ' + err.detail : '') || 'Upload failed')
       }
     } catch {
       alert('Upload failed')

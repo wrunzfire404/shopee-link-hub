@@ -1,92 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 
+// Free imgbb API key (public, 32MB limit per image)
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY || '367e08a72ed929e71be498f74c02cbe7'
 
-// POST - upload image/video file
+// Allow larger uploads (up to 10MB)
+export const maxDuration = 30
+
+export const runtime = 'nodejs'
+
+// POST - upload file
 export async function POST(request: NextRequest) {
   const authenticated = await isAuthenticated()
   if (!authenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const formData = await request.formData()
-  const file = formData.get('file') as File | null
-
-  if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-  }
-
-  // For videos, we need a different approach - use Vercel Blob if available
-  if (file.type.startsWith('video/')) {
-    return await handleVideoUpload(file)
-  }
-
-  // For images, use imgbb (free, reliable)
-  return await handleImageUpload(file)
-}
-
-async function handleImageUpload(file: File) {
   try {
-    // Convert file to base64
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    if (file.type.startsWith('video/')) {
+      return NextResponse.json({ error: 'Video upload: paste a direct video URL instead (e.g. from Google Drive or Dropbox)' }, { status: 422 })
+    }
+
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Only images are supported for upload' }, { status: 400 })
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
+    }
+
+    // Convert to base64
     const bytes = await file.arrayBuffer()
     const base64 = Buffer.from(bytes).toString('base64')
 
-    // Upload to imgbb
-    const formData = new FormData()
-    formData.append('key', IMGBB_API_KEY)
-    formData.append('image', base64)
-    formData.append('name', file.name.replace(/\.[^.]+$/, ''))
+    // Upload to imgbb using URLSearchParams (most compatible)
+    const params = new URLSearchParams()
+    params.append('key', IMGBB_API_KEY)
+    params.append('image', base64)
 
     const res = await fetch('https://api.imgbb.com/1/upload', {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
     })
-
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('imgbb error:', err)
-      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
-    }
 
     const data = await res.json()
 
-    if (!data.success) {
-      return NextResponse.json({ error: 'Upload failed', detail: data }, { status: 500 })
+    if (!res.ok || !data.success) {
+      console.error('imgbb response:', JSON.stringify(data))
+      return NextResponse.json(
+        { error: 'Image host rejected the upload', detail: data.error?.message || 'Unknown error' },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ url: data.data.url })
+    return NextResponse.json({ url: data.data.display_url || data.data.url })
   } catch (err: any) {
-    console.error('Upload error:', err)
+    console.error('Upload exception:', err)
     return NextResponse.json({ error: 'Upload failed', message: err.message }, { status: 500 })
   }
-}
-
-async function handleVideoUpload(file: File) {
-  // Try Vercel Blob for video (if available)
-  const blobToken = process.env.BLOB_READ_WRITE_TOKEN
-
-  if (blobToken) {
-    try {
-      const { put } = await import('@vercel/blob')
-      const ext = file.name.split('.').pop() || 'mp4'
-      const filename = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-      const blob = await put(filename, file, {
-        access: 'public',
-        token: blobToken,
-        contentType: file.type,
-      })
-
-      return NextResponse.json({ url: blob.url })
-    } catch (err: any) {
-      console.error('Blob video upload error:', err)
-    }
-  }
-
-  // Fallback: return error with guidance
-  return NextResponse.json(
-    { error: 'Video upload requires Blob storage. Connect Vercel Blob or use a video URL instead.' },
-    { status: 422 }
-  )
 }
