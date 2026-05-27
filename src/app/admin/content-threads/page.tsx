@@ -346,11 +346,11 @@ export default function ContentThreadsPage() {
                 {extraImages.map((url, i) => (
                   <div key={i} className="relative">
                     {url.match(/\.(mp4|mov|webm|avi)$/i) || url.includes('video') ? (
-                      <div className="w-14 h-14 bg-[#222] rounded-lg border border-[#333] flex items-center justify-center">
+                      <div className="w-14 h-20 bg-[#222] rounded-lg border border-[#333] flex items-center justify-center">
                         <span className="text-lg">🎬</span>
                       </div>
                     ) : (
-                      <img src={url} alt="" className="w-14 h-14 object-cover rounded-lg border border-[#333]" />
+                      <img src={url} alt="" className="h-20 w-auto max-w-[60px] object-contain rounded-lg border border-[#333] bg-[#111]" />
                     )}
                     <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center">✕</button>
                   </div>
