@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'AI API key not configured' }, { status: 500 })
   }
 
-  const { productName, price, discount, description, platform, style, linkNumber } = await request.json()
+  const { productName, price, discount, description, platform, style, linkNumber, imageUrl } = await request.json()
 
   const isIG = platform?.toLowerCase().includes('instagram')
 
@@ -64,9 +64,17 @@ Style: ${style || 'review'}`
         model: 'anthropic/claude-opus-4.7',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          {
+            role: 'user',
+            content: imageUrl
+              ? [
+                  { type: 'image_url', image_url: { url: imageUrl } },
+                  { type: 'text', text: userPrompt + '\n\nAnalisa gambar produk ini juga buat bikin caption yang lebih detail dan akurat.' },
+                ]
+              : userPrompt,
+          },
         ],
-        max_tokens: 300,
+        max_tokens: 400,
         temperature: 0.85,
       }),
     })

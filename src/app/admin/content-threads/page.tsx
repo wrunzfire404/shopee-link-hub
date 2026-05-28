@@ -80,7 +80,7 @@ export default function ContentThreadsPage() {
   }
   function selectProduct(product: LinkItem) {
     setSelectedProduct(product)
-    setExtraImages(product.imageUrl ? [product.imageUrl] : [])
+    setExtraImages([]) // kosong, user tambah sendiri
     setBaseCaption('')
     setVariations([])
     setStatus('idle')
@@ -111,6 +111,7 @@ export default function ContentThreadsPage() {
           productName: selectedProduct.title, price: selectedProduct.price,
           discount: selectedProduct.discount, description: selectedProduct.description,
           platform: platform === 'both' ? 'Threads & Instagram' : platform === 'instagram' ? 'Instagram' : 'Threads', style, linkNumber: getProductSlugNumber(),
+          imageUrl: extraImages.length > 0 ? extraImages[0] : undefined,
         }),
       })
       if (!res.ok) { setError('AI generation failed'); setStatus('idle'); return }
