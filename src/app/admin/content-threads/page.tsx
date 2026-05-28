@@ -23,13 +23,14 @@ interface ThreadsAccount {
 export default function ContentThreadsPage() {
   const router = useRouter()
   const [products, setProducts] = useState<LinkItem[]>([])
-  const [accounts, setAccounts] = useState<ThreadsAccount[]>([])
+  const [allAccounts, setAllAccounts] = useState<ThreadsAccount[]>([])
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
   const [selectedProduct, setSelectedProduct] = useState<LinkItem | null>(null)
   const [baseCaption, setBaseCaption] = useState('')
   const [variations, setVariations] = useState<string[]>([])
   const [showAllVariations, setShowAllVariations] = useState(false)
   const [style, setStyle] = useState<'review' | 'promo' | 'story'>('review')
+  const [platform, setPlatform] = useState<'threads' | 'instagram' | 'both'>('threads')
   const [status, setStatus] = useState<PostStatus>('idle')
   const [error, setError] = useState('')
   const [extraImages, setExtraImages] = useState<string[]>([])
@@ -38,6 +39,12 @@ export default function ContentThreadsPage() {
   const [scheduleTime, setScheduleTime] = useState('')
   const [postResults, setPostResults] = useState<any[]>([])
   const [postProgress, setPostProgress] = useState(0)
+
+  // Filter accounts by selected platform
+  const accounts = allAccounts.filter(a => {
+    if (platform === 'both') return a.platform === 'threads' || a.platform === 'instagram'
+    return a.platform === platform
+  })
 
   useEffect(() => { checkAuth() }, [])
 
@@ -59,7 +66,8 @@ export default function ContentThreadsPage() {
       const res = await fetch('/api/wahdx/accounts')
       if (res.ok) {
         const data = await res.json()
-        setAccounts((data.data || []).filter((a: any) => a.platform === 'threads'))
+        // Load both threads and instagram accounts
+        setAllAccounts((data.data || []).filter((a: any) => a.platform === 'threads' || a.platform === 'instagram'))
       }
     } catch {}
   }
@@ -102,7 +110,7 @@ export default function ContentThreadsPage() {
         body: JSON.stringify({
           productName: selectedProduct.title, price: selectedProduct.price,
           discount: selectedProduct.discount, description: selectedProduct.description,
-          platform: 'Threads', style, linkNumber: getProductSlugNumber(),
+          platform: platform === 'both' ? 'Threads & Instagram' : platform === 'instagram' ? 'Instagram' : 'Threads', style, linkNumber: getProductSlugNumber(),
         }),
       })
       if (!res.ok) { setError('AI generation failed'); setStatus('idle'); return }
@@ -191,7 +199,7 @@ export default function ContentThreadsPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            caption, accountId, platform: 'threads',
+            caption, accountId, platform: accounts.find(a => a.accountId === accountId)?.platform || 'threads',
             mediaUrls,
             scheduleTime: scheduleMode && scheduleTime ? new Date(scheduleTime).toISOString() : undefined,
           }),
@@ -220,15 +228,24 @@ export default function ContentThreadsPage() {
         <div className="flex items-center gap-3 mb-6">
           <a href="/admin" className="p-2 hover:bg-white/5 rounded-lg"><ArrowLeft className="w-5 h-5 text-gray-400" /></a>
           <div>
-            <h1 className="text-xl font-bold">🧵 Threads Bot</h1>
-            <p className="text-gray-500 text-xs">Generate variasi caption & post ke semua akun</p>
+            <h1 className="text-xl font-bold">📱 Social Bot</h1>
+            <p className="text-gray-500 text-xs">Generate caption & post ke Threads / Instagram</p>
           </div>
+        </div>
+
+        {/* Platform Selector */}
+        <div className="flex gap-2 mb-4">
+          {(['threads', 'instagram', 'both'] as const).map(p => (
+            <button key={p} onClick={() => { setPlatform(p); setSelectedAccountIds([]) }} className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${platform === p ? 'bg-orange-500 text-white' : 'bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white'}`}>
+              {p === 'threads' ? '🧵 Threads' : p === 'instagram' ? '📸 Instagram' : '🔀 Both'}
+            </button>
+          ))}
         </div>
 
         {/* Accounts */}
         <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-300">Akun Threads ({accounts.length})</h2>
+            <h2 className="text-sm font-semibold text-gray-300">Akun {platform === 'both' ? 'Threads & IG' : platform === 'instagram' ? 'Instagram' : 'Threads'} ({accounts.length})</h2>
             <button onClick={selectAllAccounts} className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1">
               {selectedAccountIds.length === accounts.length && accounts.length > 0 ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
               {selectedAccountIds.length === accounts.length && accounts.length > 0 ? 'Deselect All' : 'Select All'}
@@ -243,7 +260,7 @@ export default function ContentThreadsPage() {
                   {selectedAccountIds.includes(acc.accountId) ? <CheckSquare className="w-4 h-4 text-orange-400 flex-shrink-0" /> : <Square className="w-4 h-4 text-gray-600 flex-shrink-0" />}
                   {acc.avatar_url && <img src={acc.avatar_url} className="w-7 h-7 rounded-full flex-shrink-0" alt="" />}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate">@{acc.username}</p>
+                    <p className="text-xs font-medium truncate">@{acc.username} <span className="text-gray-600">{acc.platform === 'instagram' ? '📸' : '🧵'}</span></p>
                     <p className="text-[10px] text-gray-500">{acc.followers} followers</p>
                   </div>
                 </button>

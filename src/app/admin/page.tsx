@@ -248,7 +248,7 @@ export default function AdminPage() {
           <h1 className="text-lg font-bold">🛍️ Link Hub Admin</h1>
           <div className="flex gap-2">
             <a href="/admin/content-threads" className="px-3 py-1.5 bg-purple-600/20 border border-purple-500/30 rounded-lg text-xs text-purple-300 hover:bg-purple-600/30 transition-colors flex items-center gap-1">
-              🧵 Threads Bot
+              📱 Social Bot
             </a>
             <a href="/" target="_blank" className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs hover:border-[var(--accent)] transition-colors flex items-center gap-1">
               <ExternalLink className="w-3 h-3" /> Preview

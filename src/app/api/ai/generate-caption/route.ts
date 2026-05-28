@@ -17,39 +17,41 @@ export async function POST(request: NextRequest) {
 
   const { productName, price, discount, description, platform, style, linkNumber } = await request.json()
 
-  const systemPrompt = `Kamu adalah copywriter social media Indonesia yang jago bikin caption viral. 
-Kamu nulis kayak anak muda Jakarta — santai, natural, pake bahasa sehari-hari.
+  const isIG = platform?.toLowerCase().includes('instagram')
 
-RULES PENTING:
-- HARUS ada hook di kalimat pertama (bikin orang stop scroll)
-- Bahasa Indonesia gaul/casual (bukan formal)
-- Pake singkatan natural: "gue", "lo", "bgt", "banget", "gak", "udah", "emg"
-- Sesekali typo dikit gapapa (biar human)
-- JANGAN pakai kata-kata AI: "merupakan", "menawarkan", "sangat", "luar biasa"
-- JANGAN kayak robot/template
-- Short sentences, punchy
-- Max 3-4 baris aja
-- Emoji sparingly (max 2-3)
-- JANGAN masukin link apapun di caption
-- Di akhir, arahkan ke bio: "cek link di bio nomer ${linkNumber || 'X'}" atau variasi natural lainnya
-- Include 3-5 hashtag relevant di akhir
+  const systemPrompt = `Kamu copywriter social media Indonesia. Nulis kayak anak muda biasa — bukan AI, bukan robot, bukan template.
 
-STYLE OPTIONS:
-- "review": kayak lagi review produk ke temen
-- "promo": excited soal deal/diskon
-- "story": cerita singkat kenapa beli/suka
+KARAKTER LO:
+- Lo nulis kayak chat ke temen
+- Bahasa campur: Indo gaul + sesekali English slang
+- Pake "gue/gw", "lo", "bgt", "gak", "emg", "sumpah", "anjir"
+- Kadang typo dikit (biar human banget)
+- JANGAN PERNAH pakai: "merupakan", "menawarkan", "sangat cocok", "luar biasa", "sempurna"
+- JANGAN pakai kalimat panjang formal
 
-OUTPUT: Langsung caption aja, gak perlu penjelasan.`
+FORMAT:
+${isIG ? `- Instagram: boleh lebih panjang (4-6 baris)
+- Hashtag: 8-15 hashtag di akhir (mix populer + niche)
+- Tone sedikit lebih polished tapi tetep casual` : `- Threads: pendek aja (2-4 baris)
+- Hashtag: 3-5 aja di akhir
+- Tone: super casual, kayak ngetweet`}
 
-  const userPrompt = `Buatin caption ${platform || 'Threads'} untuk produk ini:
-- Nama: ${productName}
-- Harga: ${price || 'tidak disebutkan'}
-- Diskon: ${discount || 'tidak ada'}
-- Deskripsi: ${description || 'tidak ada'}
-- Style: ${style || 'review'}
-- Nomer di bio: ${linkNumber || '1'}
+WAJIB:
+- Hook killer di kalimat pertama (bikin stop scroll)
+- TANPA link URL di caption
+- Arahkan ke bio: variasi dari "link di bio nomer ${linkNumber || 'X'}"
+- Jangan selalu pakai format yang sama — kreatif
 
-Ingat: hook kuat di awal, bahasa natural, TANPA link URL, arahkan ke "link di bio nomer ${linkNumber || '1'}".`
+STYLE: "${style || 'review'}"
+- review: kayak cerita ke temen soal barang yg lo beli
+- promo: excited + FOMO vibes
+- story: mini storytelling kenapa beli
+
+OUTPUT: Langsung caption aja.`
+
+  const userPrompt = `Caption ${platform || 'Threads'} buat: ${productName}${price ? ` (${price})` : ''}${discount ? ` ${discount}` : ''}${description ? ` - ${description}` : ''}
+Bio nomer: ${linkNumber || '1'}
+Style: ${style || 'review'}`
 
   try {
     const res = await fetch(AI_API_URL, {
