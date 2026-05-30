@@ -69,6 +69,18 @@ ${isIG ? `FORMAT IG:
 - 3-5 hashtag di akhir
 - Super casual kayak tweet`}
 
+HASHTAG RULES (PENTING):
+- Hashtag PERTAMA = jadi TOPIC di Threads. Harus paling relate sama isi caption & paling menarik perhatian.
+- Contoh hashtag pertama yang bagus: #cuan, #tipshemat, #sidehustle, #rahasia, #lifehack
+- Sisanya hashtag niche produk
+
+HOOK VARIASI (WAJIB BEDA-BEDA tiap generate):
+- Angle CUAN/PROFIT: "cara gue hemat xxx", "ini sih celah cuan", "duit lo bisa lebih irit"
+- Angle KEBUTUHAN: "lo pasti butuh ini kalo...", "buat yg sering [problem]"
+- Angle PROBLEM SOLVER: "capek [masalah]? gue nemu solusinya"
+- Angle FOMO: "orang udah pada tau ini, lo kapan?"
+- PRIORITAS: angle cuan/profit/bisnis paling engage — sering pake ini tapi tetep rotate
+
 WAJIB:
 - TANPA link URL di caption
 - Arahkan ke bio: variasi dari "link di bio nomer ${linkNumber || 'X'}" tapi natural (misal "cek bio gue nomer ${linkNumber}" atau "ada di bio nomer ${linkNumber} btw")
