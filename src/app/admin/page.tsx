@@ -650,7 +650,8 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, da
         </button>
       </div>
 
-      {/* URL input */}
+      {/* URL input - only for affiliate */}
+      {formData.type === 'affiliate' && (
       <div>
         <input type="text" placeholder="URL Shopee Affiliate (shortlink / full link) *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
         {formData.url && (
@@ -669,10 +670,14 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, da
           </div>
         )}
       </div>
+      )}
 
       {/* Order contact for digital products */}
       {formData.type === 'digital' && (
-        <input type="text" placeholder="Order via (misal: @nexvorastore_bot)" value={formData.orderContact} onChange={e => setFormData({...formData, orderContact: e.target.value})} className="w-full px-3 py-2 bg-blue-500/5 border border-blue-500/30 rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-blue-500 outline-none" />
+        <div>
+          <input type="text" placeholder="Order via Telegram (misal: @nexvorastore_bot) *" value={formData.orderContact} onChange={e => setFormData({...formData, orderContact: e.target.value})} className="w-full px-3 py-2 bg-blue-500/5 border border-blue-500/30 rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-blue-500 outline-none" />
+          <p className="text-[10px] text-blue-400/70 mt-1">💎 Produk digital — order langsung via Telegram, gak perlu URL Shopee</p>
+        </div>
       )}
 
       {/* Product Name + AI Optimize */}
@@ -734,7 +739,7 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, da
         </select>
         <input type="text" placeholder="Deskripsi singkat" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
       </div>
-      <button onClick={onSubmit} disabled={!formData.title || !formData.url} className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+      <button onClick={onSubmit} disabled={!formData.title || (formData.type === 'digital' ? !formData.orderContact : !formData.url)} className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
         {submitLabel}
       </button>
     </div>
