@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 
-const AI_API_URL = 'https://llm.wavespeed.ai/v1/chat/completions'
-const AI_API_KEY = process.env.WAVESPEED_API_KEY || ''
+const AI_API_URL = process.env.AI_API_URL || 'https://unix-none-limitations-sterling.trycloudflare.com/v1/chat/completions'
+const AI_API_KEY = process.env.AI_API_KEY || process.env.WAVESPEED_API_KEY || ''
+const AI_MODEL = process.env.AI_MODEL || 'kiro/claude-sonnet-4.5-thinking'
 
 // POST - generate caption from product info
 export async function POST(request: NextRequest) {
@@ -91,7 +92,7 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
         'Authorization': `Bearer ${AI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-opus-4.7',
+        model: AI_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           {
