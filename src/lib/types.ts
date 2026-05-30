@@ -10,6 +10,8 @@ export interface LinkItem {
   discount?: string
   category?: string
   slug?: string  // which page this link belongs to (e.g. "sasha", "outfitku")
+  type?: 'affiliate' | 'digital'  // affiliate = Shopee, digital = Telegram order
+  orderContact?: string  // Telegram bot/username for digital products
   isActive: boolean
   isPinned: boolean
   clicks: number

@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
     discount: body.discount || '',
     category: body.category || '',
     slug: body.slug || '',
+    type: body.type || 'affiliate',
+    orderContact: body.orderContact || '',
     isActive: body.isActive ?? true,
     isPinned: body.isPinned ?? false,
     clicks: 0,

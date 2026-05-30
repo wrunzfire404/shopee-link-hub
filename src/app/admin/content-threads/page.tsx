@@ -112,6 +112,8 @@ export default function ContentThreadsPage() {
           discount: selectedProduct.discount, description: selectedProduct.description,
           platform: platform === 'both' ? 'Threads & Instagram' : platform === 'instagram' ? 'Instagram' : 'Threads', style, linkNumber: getProductSlugNumber(),
           imageUrl: extraImages.length > 0 ? extraImages[0] : undefined,
+          type: selectedProduct.type || 'affiliate',
+          orderContact: selectedProduct.orderContact || '',
         }),
       })
       if (!res.ok) { setError('AI generation failed'); setStatus('idle'); return }

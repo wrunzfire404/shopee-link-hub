@@ -7,9 +7,17 @@ interface Props {
 }
 
 export default function PublicLinkCard({ link }: Props) {
+  const isDigital = link.type === 'digital'
+
   const handleClick = async () => {
     fetch(`/api/links/${link.id}/click`, { method: 'POST' })
-    window.open(link.url, '_blank')
+    if (isDigital && link.orderContact) {
+      // Open Telegram
+      const contact = link.orderContact.replace('@', '')
+      window.open(`https://t.me/${contact}`, '_blank')
+    } else {
+      window.open(link.url, '_blank')
+    }
   }
 
   return (
@@ -69,8 +77,8 @@ export default function PublicLinkCard({ link }: Props) {
 
       {/* CTA button */}
       <div className="flex-shrink-0">
-        <div className="bg-[#ee4d2d] group-hover:bg-[#d73211] text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors shadow-sm shadow-orange-200/50">
-          Lihat
+        <div className={`${isDigital ? 'bg-blue-600 group-hover:bg-blue-700 shadow-blue-200/50' : 'bg-[#ee4d2d] group-hover:bg-[#d73211] shadow-orange-200/50'} text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors shadow-sm`}>
+          {isDigital ? 'Order' : 'Lihat'}
         </div>
       </div>
     </button>

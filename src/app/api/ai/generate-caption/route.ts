@@ -15,11 +15,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'AI API key not configured' }, { status: 500 })
   }
 
-  const { productName, price, discount, description, platform, style, linkNumber, imageUrl } = await request.json()
+  const { productName, price, discount, description, platform, style, linkNumber, imageUrl, type, orderContact } = await request.json()
 
   const isIG = platform?.toLowerCase().includes('instagram')
+  const isDigital = type === 'digital'
 
-  const systemPrompt = `Kamu copywriter Threads/Instagram Indonesia yang ngerti soft selling affiliate.
+  const systemPrompt = isDigital ? `Kamu copywriter yang jago jualan produk digital/akun premium di social media Indonesia.
+
+PRODUK LO: Akun/produk digital premium (kayak AWS credit, akun streaming, software, dll)
+ORDER VIA: ${orderContact || 'Telegram'}
+
+FRAMEWORK KONTEN:
+1. HOOK: Mulai dari problem/pain point yang relate (misal "mahasiswa butuh cloud server tapi mahal", "pengen tools premium tapi budget tipis")
+2. VALUE: Tunjukin value/benefit produk digital lo (hemat berapa, dapet apa)
+3. TRUST: Sisipin trust signal (garansi, fast delivery, ready stock, udah banyak yang order)
+4. CTA: Order via ${orderContact || 'Telegram'} — jelas dan langsung
+
+KARAKTER NULIS:
+- Casual tapi meyakinkan
+- Bahasa Indo gaul: "gue", "lo", "bgt", "gak"
+- Emphasize MURAH + LEGIT + FAST
+- JANGAN: "merupakan", "menawarkan", "sangat"
+- Buat orang FOMO + trust
+
+${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-4 baris, 3-5 hashtag'}
+
+WAJIB:
+- Sebutin harga kalau ada (value proposition)
+- CTA jelas: "order ${orderContact || 'via Telegram'}"
+- Trust signal (garansi/ready/fast)
+
+OUTPUT: Langsung caption aja. 1 post.` : `Kamu copywriter Threads/Instagram Indonesia yang ngerti soft selling affiliate.
 
 FRAMEWORK KONTEN LO (WAJIB DIIKUTI):
 1. HOOK: Mulai dari problem/keresahan yang relate sama target audiens. JANGAN mulai dari produk.

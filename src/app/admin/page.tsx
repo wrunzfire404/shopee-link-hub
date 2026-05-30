@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [formData, setFormData] = useState({
     title: '', description: '', url: '', price: '',
     originalPrice: '', discount: '', category: '', imageUrl: '', slug: '',
+    type: 'affiliate', orderContact: '',
   })
   // Site settings form
   const [siteForm, setSiteForm] = useState({
@@ -198,11 +199,13 @@ export default function AdminPage() {
       category: link.category || '',
       imageUrl: link.imageUrl || '',
       slug: link.slug || '',
+      type: link.type || 'affiliate',
+      orderContact: link.orderContact || '',
     })
   }
 
   function resetForm() {
-    setFormData({ title: '', description: '', url: '', price: '', originalPrice: '', discount: '', category: '', imageUrl: '', slug: '' })
+    setFormData({ title: '', description: '', url: '', price: '', originalPrice: '', discount: '', category: '', imageUrl: '', slug: '', type: 'affiliate', orderContact: '' })
   }
 
   function toggleSelect(id: string) {
@@ -637,6 +640,16 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, da
 
   return (
     <div className="space-y-3">
+      {/* Product Type */}
+      <div className="flex gap-2">
+        <button type="button" onClick={() => setFormData({...formData, type: 'affiliate'})} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${formData.type === 'affiliate' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}>
+          🛍️ Affiliate (Shopee)
+        </button>
+        <button type="button" onClick={() => setFormData({...formData, type: 'digital'})} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${formData.type === 'digital' ? 'bg-blue-600 text-white' : 'bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}>
+          💎 Digital (Telegram)
+        </button>
+      </div>
+
       {/* URL input */}
       <div>
         <input type="text" placeholder="URL Shopee Affiliate (shortlink / full link) *" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] outline-none" />
@@ -656,6 +669,11 @@ function LinkForm({ formData, setFormData, categories, onSubmit, submitLabel, da
           </div>
         )}
       </div>
+
+      {/* Order contact for digital products */}
+      {formData.type === 'digital' && (
+        <input type="text" placeholder="Order via (misal: @nexvorastore_bot)" value={formData.orderContact} onChange={e => setFormData({...formData, orderContact: e.target.value})} className="w-full px-3 py-2 bg-blue-500/5 border border-blue-500/30 rounded-lg text-white text-sm placeholder:text-[var(--text-secondary)] focus:border-blue-500 outline-none" />
+      )}
 
       {/* Product Name + AI Optimize */}
       <div className="flex gap-2">

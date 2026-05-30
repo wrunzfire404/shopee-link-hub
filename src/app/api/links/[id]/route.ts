@@ -43,6 +43,8 @@ export async function PUT(
   if (body.discount !== undefined) link.discount = body.discount
   if (body.category !== undefined) link.category = body.category
   if (body.slug !== undefined) link.slug = body.slug
+  if (body.type !== undefined) link.type = body.type
+  if (body.orderContact !== undefined) link.orderContact = body.orderContact
   if (body.isActive !== undefined) link.isActive = body.isActive
   if (body.isPinned !== undefined) link.isPinned = body.isPinned
   if (body.number !== undefined) link.number = body.number
