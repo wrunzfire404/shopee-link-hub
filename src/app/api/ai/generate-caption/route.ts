@@ -119,7 +119,7 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
               : userPrompt,
           },
         ],
-        max_tokens: 250,
+        max_tokens: 150,
         temperature: 0.85,
       }),
     })
@@ -130,7 +130,25 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
     }
 
     const data = await res.json()
-    const caption = data.choices?.[0]?.message?.content || ''
+    let caption = data.choices?.[0]?.message?.content || ''
+
+    // Force cap at 480 chars for Threads (500 limit with buffer)
+    if (caption.length > 480) {
+      // Try to cut at last complete sentence before 480
+      const cut = caption.slice(0, 480)
+      const lastPeriod = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('\n'))
+      if (lastPeriod > 200) {
+        caption = cut.slice(0, lastPeriod + 1)
+      } else {
+        caption = cut
+      }
+      // Ensure hashtags are included - grab from original if cut off
+      const hashtagMatch = data.choices?.[0]?.message?.content?.match(/#\w+/g)
+      if (hashtagMatch && !caption.includes('#')) {
+        const tags = hashtagMatch.slice(0, 3).join(' ')
+        caption = caption.slice(0, 480 - tags.length - 2) + '\n\n' + tags
+      }
+    }
 
     return NextResponse.json({ caption })
   } catch (err: any) {
