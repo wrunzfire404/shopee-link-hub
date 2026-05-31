@@ -39,7 +39,7 @@ KARAKTER NULIS:
 - JANGAN: "merupakan", "menawarkan", "sangat"
 - Buat orang FOMO + trust
 
-${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-4 baris, 3-5 hashtag'}
+${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-3 baris PENDEK aja, 3 hashtag. TOTAL MAX 400 KARAKTER.'}
 
 WAJIB:
 - Sebutin harga HANYA kalau dikasih di info produk. JANGAN NGARANG HARGA.
@@ -75,7 +75,7 @@ HASHTAG RULES (PENTING):
 - Contoh hashtag pertama yang bagus: #cuan, #tipshemat, #sidehustle, #rahasia, #lifehack
 - Sisanya hashtag niche produk
 
-BATAS KARAKTER: TOTAL caption + hashtag WAJIB di bawah 450 karakter. Ini STRICT. Lebih dari itu = GAGAL.
+BATAS KARAKTER: TOTAL caption + hashtag WAJIB di bawah 400 karakter. PENDEK. Kalo kepanjangan = GAGAL. Lebih baik pendek tapi impactful.
 
 HOOK VARIASI (WAJIB BEDA-BEDA tiap generate):
 - Angle CUAN/PROFIT: "cara gue hemat xxx", "ini sih celah cuan", "duit lo bisa lebih irit"
@@ -120,7 +120,7 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
               : userPrompt,
           },
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0.85,
       }),
     })
@@ -133,22 +133,26 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
     const data = await res.json()
     let caption = data.choices?.[0]?.message?.content || ''
 
-    // Force cap at 480 chars for Threads (500 limit with buffer)
+    // Force cap at 480 chars — always ensure complete caption
     if (caption.length > 480) {
-      // Try to cut at last complete sentence before 480
-      const cut = caption.slice(0, 480)
-      const lastPeriod = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('\n'))
-      if (lastPeriod > 200) {
-        caption = cut.slice(0, lastPeriod + 1)
-      } else {
-        caption = cut
+      // Extract hashtags from full caption
+      const allHashtags = caption.match(/#\w+/g) || []
+      const tags = allHashtags.slice(0, 3).join(' ')
+
+      // Get caption without hashtags
+      const captionWithoutTags = caption.replace(/#\w+/g, '').trim()
+
+      // Cut caption body to fit within limit (leave room for tags)
+      const maxBodyLen = 480 - tags.length - 4 // 4 for \n\n spacing
+      let body = captionWithoutTags.slice(0, maxBodyLen)
+
+      // Cut at last sentence end
+      const lastEnd = Math.max(body.lastIndexOf('.'), body.lastIndexOf('!'), body.lastIndexOf('?'), body.lastIndexOf('\n'))
+      if (lastEnd > maxBodyLen * 0.5) {
+        body = body.slice(0, lastEnd + 1)
       }
-      // Ensure hashtags are included - grab from original if cut off
-      const hashtagMatch = data.choices?.[0]?.message?.content?.match(/#\w+/g)
-      if (hashtagMatch && !caption.includes('#')) {
-        const tags = hashtagMatch.slice(0, 3).join(' ')
-        caption = caption.slice(0, 480 - tags.length - 2) + '\n\n' + tags
-      }
+
+      caption = body.trim() + '\n\n' + tags
     }
 
     return NextResponse.json({ caption })
