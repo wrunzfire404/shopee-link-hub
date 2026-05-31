@@ -42,9 +42,10 @@ KARAKTER NULIS:
 ${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-4 baris, 3-5 hashtag'}
 
 WAJIB:
-- Sebutin harga kalau ada (value proposition)
-- CTA jelas: "order ${orderContact || 'via Telegram'}"
+- Sebutin harga HANYA kalau dikasih di info produk. JANGAN NGARANG HARGA.
+- CTA WAJIB ada: "order ${orderContact || 'via Telegram'}" atau "DM ${orderContact}" — HARUS muncul di caption
 - Trust signal (garansi/ready/fast)
+- JANGAN bikin harga sendiri kalau gak dikasih
 
 OUTPUT: Langsung caption aja. 1 post.` : `Kamu copywriter Threads/Instagram Indonesia yang ngerti soft selling affiliate.
 
