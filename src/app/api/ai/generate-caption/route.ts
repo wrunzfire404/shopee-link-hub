@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const { productName, price, discount, description, platform, style, linkNumber, imageUrl, type, orderContact } = await request.json()
 
   const isIG = platform?.toLowerCase().includes('instagram')
-  const isDigital = type === 'digital'
+  const isDigital = type === 'digital' || !!orderContact
 
   const systemPrompt = isDigital ? `Kamu copywriter yang jago jualan produk digital/akun premium di social media Indonesia.
 
