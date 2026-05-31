@@ -43,7 +43,7 @@ ${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-4 baris, 3-5 
 
 WAJIB:
 - Sebutin harga HANYA kalau dikasih di info produk. JANGAN NGARANG HARGA.
-- CTA WAJIB ada: "order ${orderContact || 'via Telegram'}" atau "DM ${orderContact}" — HARUS muncul di caption
+- CTA WAJIB ada: "order via Telegram ${orderContact}" — tulis LENGKAP "order via Telegram ${orderContact}" biar orang tau harus cari di Telegram, bukan di Threads
 - Trust signal (garansi/ready/fast)
 - JANGAN bikin harga sendiri kalau gak dikasih
 
