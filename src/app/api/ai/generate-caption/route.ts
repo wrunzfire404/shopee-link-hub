@@ -74,6 +74,8 @@ HASHTAG RULES (PENTING):
 - Contoh hashtag pertama yang bagus: #cuan, #tipshemat, #sidehustle, #rahasia, #lifehack
 - Sisanya hashtag niche produk
 
+BATAS KARAKTER: TOTAL caption + hashtag WAJIB di bawah 450 karakter. Ini STRICT. Lebih dari itu = GAGAL.
+
 HOOK VARIASI (WAJIB BEDA-BEDA tiap generate):
 - Angle CUAN/PROFIT: "cara gue hemat xxx", "ini sih celah cuan", "duit lo bisa lebih irit"
 - Angle KEBUTUHAN: "lo pasti butuh ini kalo...", "buat yg sering [problem]"
@@ -117,7 +119,7 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
               : userPrompt,
           },
         ],
-        max_tokens: 400,
+        max_tokens: 250,
         temperature: 0.85,
       }),
     })

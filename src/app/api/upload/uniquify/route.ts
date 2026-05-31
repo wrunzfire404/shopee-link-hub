@@ -53,26 +53,13 @@ async function createUniqueVariant(imageUrl: string, seed: number): Promise<stri
 
   const buffer = Buffer.from(await res.arrayBuffer())
 
-  // Apply random-ish modifications based on seed
-  const rotation = ((seed * 7) % 5) - 2 // -2 to +2 degrees
-  const brightness = 1 + (((seed * 13) % 10) - 5) / 100 // 0.95 to 1.05
-  const cropPx = (seed % 4) + 1 // 1-4 pixels
-
-  const metadata = await sharp(buffer).metadata()
-  const width = metadata.width || 1080
-  const height = metadata.height || 1080
+  // Apply minimal modifications (invisible but changes hash)
+  const brightness = 1 + (((seed * 13) % 4) - 2) / 100 // 0.98 to 1.02 (barely noticeable)
+  const quality = 95 - (seed % 4) // 92-95 quality (high, minimal loss)
 
   const processed = await sharp(buffer)
-    .rotate(rotation, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .modulate({ brightness })
-    .extract({
-      left: cropPx,
-      top: cropPx,
-      width: Math.max(width - cropPx * 2, 100),
-      height: Math.max(height - cropPx * 2, 100),
-    })
-    .resize(width, height) // resize back to original dimensions
-    .jpeg({ quality: 92 + (seed % 6) }) // slightly different quality each time
+    .jpeg({ quality, mozjpeg: true })
     .toBuffer()
 
   // Upload the unique variant to Imgur
