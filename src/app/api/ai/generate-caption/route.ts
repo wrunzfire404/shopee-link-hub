@@ -42,10 +42,11 @@ KARAKTER NULIS:
 ${isIG ? 'FORMAT IG: 4-6 baris, 8-15 hashtag' : 'FORMAT THREADS: 2-3 baris PENDEK aja, 3 hashtag. TOTAL MAX 400 KARAKTER.'}
 
 HASHTAG RULES:
-- Hashtag PERTAMA = jadi TOPIC di Threads. HARUS hashtag yang BANYAK orang follow/search.
-- JANGAN bikin hashtag niche yang gak ada orang (misal #JualLeonardo, #AkunMurah — gak ada traffic)
-- Pake hashtag UMUM yang relate: #AI, #AITools, #DesainGrafis, #ContentCreator, #Freelancer, #Mahasiswa, #TipsHemat, #SideHustle, #Cuan
-- Pilih yang paling nyambung sama isi caption
+- Hashtag PERTAMA = jadi TOPIC di Threads. HARUS hashtag yang MENJUAL dan HIGH TRAFFIC.
+- Hashtag pertama WAJIB salah satu dari: #Cuan #TipsHemat #SideHustle #Freelancer #ContentCreator #Mahasiswa #AI #DesainGrafis #PassiveIncome #BisnisOnline
+- JANGAN PERNAH pake nama produk sebagai hashtag pertama (misal #LeonardoAI, #AWS, #ChatGPT — itu bukan topic yang menjual)
+- Hashtag sisanya boleh niche tapi tetep yang ada traffic
+- Pilih yang paling nyambung sama hook/angle caption
 
 WAJIB:
 - Sebutin harga HANYA kalau dikasih di info produk. JANGAN NGARANG HARGA.
