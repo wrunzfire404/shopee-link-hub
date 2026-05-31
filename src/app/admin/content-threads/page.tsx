@@ -374,25 +374,23 @@ export default function ContentThreadsPage() {
                       <span className="text-orange-400">@{accounts.find(a => a.accountId === selectedAccountIds[0])?.username}</span> → Base caption ↑
                     </div>
 
-                    {/* Preview 3 variations */}
-                    {previewVariations.map((v, i) => (
+                    {/* All variations - full text + editable */}
+                    {variations.map((v, i) => (
                       <div key={i} className="py-2 border-b border-[#2a2a2a] last:border-0">
-                        <p className="text-[10px] text-orange-400 mb-1">@{accounts.find(a => a.accountId === selectedAccountIds[i + 1])?.username || `Akun ${i + 2}`}</p>
-                        <p className="text-xs text-gray-300 line-clamp-2">{v}</p>
-                      </div>
-                    ))}
-
-                    {/* Show more toggle */}
-                    {variations.length > 3 && (
-                      <button onClick={() => setShowAllVariations(!showAllVariations)} className="w-full mt-2 py-1.5 text-[11px] text-gray-500 hover:text-white flex items-center justify-center gap-1">
-                        {showAllVariations ? <><ChevronUp className="w-3 h-3" /> Tutup</> : <><ChevronDown className="w-3 h-3" /> Lihat {variations.length - 3} variasi lainnya</>}
-                      </button>
-                    )}
-
-                    {showAllVariations && variations.slice(3).map((v, i) => (
-                      <div key={i + 3} className="py-2 border-b border-[#2a2a2a] last:border-0">
-                        <p className="text-[10px] text-orange-400 mb-1">@{accounts.find(a => a.accountId === selectedAccountIds[i + 4])?.username || `Akun ${i + 5}`}</p>
-                        <p className="text-xs text-gray-300 line-clamp-2">{v}</p>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[10px] text-orange-400">@{accounts.find(a => a.accountId === selectedAccountIds[i + 1])?.username || `Akun ${i + 2}`}</p>
+                          <span className="text-[9px] text-gray-600">{v.length} chars</span>
+                        </div>
+                        <textarea
+                          value={v}
+                          onChange={e => {
+                            const updated = [...variations]
+                            updated[i] = e.target.value
+                            setVariations(updated)
+                          }}
+                          rows={3}
+                          className="w-full px-2 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-lg text-xs text-gray-300 resize-none focus:border-orange-500/50 outline-none"
+                        />
                       </div>
                     ))}
                   </div>
