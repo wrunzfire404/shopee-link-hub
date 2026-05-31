@@ -174,7 +174,7 @@ export default function ContentThreadsPage() {
 
     // Generate unique image variants for each account
     let imageVariants: string[][] = []
-    if (selectedAccountIds.length > 1) {
+    if (selectedAccountIds.length > 1 && extraImages.length > 0) {
       try {
         setError('🖼️ Generating unique image variants...')
         const res = await fetch('/api/upload/uniquify', {
@@ -184,26 +184,46 @@ export default function ContentThreadsPage() {
         })
         if (res.ok) {
           const data = await res.json()
-          imageVariants = data.variants || []
+          // Validate variants - each must have same length as extraImages and all URLs must be valid
+          const variants = data.variants || []
+          const validVariants = variants.filter((v: string[]) =>
+            Array.isArray(v) && v.length === extraImages.length && v.every((url: string) => url && url.startsWith('http'))
+          )
+          if (validVariants.length === selectedAccountIds.length) {
+            imageVariants = validVariants
+          }
         }
       } catch {}
       setError('')
+    }
+
+    // If uniquify failed or skipped, all accounts get original images
+    const getMediaForAccount = (index: number): string[] => {
+      if (imageVariants.length > 0 && imageVariants[index]) return imageVariants[index]
+      return extraImages
     }
 
     const results: any[] = []
     for (let i = 0; i < selectedAccountIds.length; i++) {
       const accountId = selectedAccountIds[i]
       const caption = getCaptionForAccount(i)
-      // Use unique images per account, fallback to originals
-      const mediaUrls = imageVariants[i] || extraImages
       setPostProgress(i + 1)
       try {
+        const postMediaUrls = getMediaForAccount(i)
+        // Validate before sending
+        if (!postMediaUrls || postMediaUrls.length === 0 || !postMediaUrls[0]) {
+          const acc = accounts.find(a => a.accountId === accountId)
+          results.push({ username: acc?.username || '?', success: false, data: { error: 'No valid media URLs' } })
+          continue
+        }
+
         const res = await fetch('/api/post/threads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            caption, accountId, platform: accounts.find(a => a.accountId === accountId)?.platform || 'threads',
-            mediaUrls,
+            caption: caption.slice(0, 500), // Threads max 500 chars
+            accountId, platform: accounts.find(a => a.accountId === accountId)?.platform || 'threads',
+            mediaUrls: postMediaUrls,
             scheduleTime: scheduleMode && scheduleTime ? new Date(scheduleTime).toISOString() : undefined,
           }),
         })
