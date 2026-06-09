@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 
-const AI_API_URL = process.env.AI_API_URL || 'https://unix-none-limitations-sterling.trycloudflare.com/v1/chat/completions'
+const AI_API_URL = process.env.AI_API_URL || 'https://integrate.api.nvidia.com/v1/chat/completions'
 const AI_API_KEY = process.env.AI_API_KEY || process.env.WAVESPEED_API_KEY || ''
-const AI_MODEL = process.env.AI_MODEL || 'kiro/claude-sonnet-4.5-thinking'
+const AI_MODEL = process.env.AI_MODEL || 'moonshotai/kimi-k2.6'
 
 // POST - generate caption from product info
 export async function POST(request: NextRequest) {
