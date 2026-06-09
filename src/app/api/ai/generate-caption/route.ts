@@ -119,11 +119,8 @@ Inget: problem/relate DULU → produk masuk natural → CTA bio. Jangan langsung
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: imageUrl
-              ? [
-                  { type: 'image_url', image_url: { url: imageUrl } },
-                  { type: 'text', text: userPrompt + '\n\nAnalisa gambar produk ini juga buat bikin caption yang lebih detail dan akurat.' },
-                ]
+            content: imageUrl 
+              ? userPrompt + `\n\n(Terdapat gambar referensi di URL ini: ${imageUrl})`
               : userPrompt,
           },
         ],
