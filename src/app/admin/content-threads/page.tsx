@@ -407,9 +407,9 @@ export default function ContentThreadsPage() {
                   </div>
                 ))}
                 <label className="w-14 h-14 bg-[#1a1a1a] border border-dashed border-[#444] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-orange-500/50 gap-0.5">
-                  <span className="text-gray-500 text-xs">{uploading ? '⏳' : '📷'}</span>
-                  <span className="text-[9px] text-gray-600">img</span>
-                  <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
+                  <span className="text-gray-500 text-xs">{uploading ? '⏳' : '📷/🎬'}</span>
+                  <span className="text-[8px] text-gray-600 text-center leading-none mt-0.5">img/vid</span>
+                  <input type="file" accept="image/*,video/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
                 </label>
               </div>
 
@@ -450,7 +450,7 @@ export default function ContentThreadsPage() {
                 </details>
               </div>
 
-              <p className="text-[10px] text-gray-600 mt-2">📷 Upload gambar langsung • 🎬 Video paste URL (Google Drive/Dropbox)</p>
+              <p className="text-[10px] text-gray-600 mt-2">📷/🎬 Upload gambar/video langsung • Atau paste URL (Google Drive/Dropbox)</p>
             </div>
 
             {/* Schedule */}
