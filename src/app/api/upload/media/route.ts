@@ -53,26 +53,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Image upload failed', detail: data.data?.error }, { status: 500 })
     }
 
-    // VIDEOS → Uploadthing
-    if (file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Video max 50MB' }, { status: 400 })
+    // VIDEOS → Catbox.moe (Free, up to 200MB, no API key needed)
+    if (file.size > 200 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Video max 200MB' }, { status: 400 })
     }
 
-    // Rename file to include proper extension
-    const ext = file.name.split('.').pop() || 'mp4'
-    const properName = `video-${Date.now()}.${ext}`
-    const renamedFile = new File([file], properName, { type: file.type })
+    const catboxForm = new FormData()
+    catboxForm.append('reqtype', 'fileupload')
+    catboxForm.append('fileToUpload', file)
 
-    const response = await utapi.uploadFiles(renamedFile)
+    const response = await fetch('https://catbox.moe/user/api.php', {
+      method: 'POST',
+      body: catboxForm,
+    })
 
-    if (response.data?.ufsUrl) {
-      // Uploadthing URL - append extension for Wahdx
-      const url = response.data.ufsUrl
-      const finalUrl = url.endsWith(`.${ext}`) ? url : `${url}/${properName}`
-      return NextResponse.json({ url: finalUrl })
+    if (response.ok) {
+      const url = await response.text()
+      if (url.startsWith('http')) {
+        return NextResponse.json({ url })
+      }
     }
 
-    return NextResponse.json({ error: 'Video upload failed', detail: response.error?.message }, { status: 500 })
+    return NextResponse.json({ error: 'Video upload failed', detail: await response.text() }, { status: 500 })
   } catch (err: any) {
     return NextResponse.json({ error: 'Upload error', message: err.message }, { status: 500 })
   }
