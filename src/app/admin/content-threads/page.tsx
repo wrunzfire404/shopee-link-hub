@@ -339,63 +339,55 @@ export default function ContentThreadsPage() {
 
             {/* Generate base */}
             <button onClick={generateCaption} disabled={status === 'generating'} className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2">
-              {status === 'generating' ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Base Caption</>}
+              {status === 'generating' ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Base Caption dengan AI</>}
             </button>
 
-            {/* Base caption editor */}
-            {baseCaption && (
-              <>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1.5 flex justify-between">
-                    <span>Base Caption (akun pertama dapet ini)</span>
-                    <span className="text-gray-600">{baseCaption.length} chars</span>
-                  </label>
-                  <textarea value={baseCaption} onChange={e => { setBaseCaption(e.target.value); setVariations([]) }} rows={4} className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm resize-none focus:border-orange-500/50 outline-none" />
-                  <button onClick={generateCaption} className="mt-1 text-xs text-gray-500 hover:text-orange-400 flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Regenerate</button>
+            {/* Base caption editor (Always Show) */}
+            <div className="mt-4">
+              <label className="text-xs text-gray-400 mb-1.5 flex justify-between">
+                <span>{selectedAccountIds.length > 0 ? `Caption @${accounts.find(a => a.accountId === selectedAccountIds[0])?.username || 'Akun Pertama'}` : 'Base Caption'}</span>
+                <span className="text-gray-600">{baseCaption.length} chars</span>
+              </label>
+              <textarea value={baseCaption} placeholder="Ketik caption manual di sini..." onChange={e => { setBaseCaption(e.target.value) }} rows={4} className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm resize-none focus:border-orange-500/50 outline-none" />
+              {baseCaption && <button onClick={generateCaption} className="mt-1 text-xs text-gray-500 hover:text-orange-400 flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Regenerate AI</button>}
+            </div>
+
+            {/* Variations preview (Always Show If > 1 Account) */}
+            {selectedAccountIds.length > 1 && (
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-3 mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-300">📝 Variasi Caption ({selectedAccountIds.length - 1} akun lainnya)</p>
+                  <div className="flex gap-2">
+                    <button onClick={generateVariations} disabled={status === 'variating' || !baseCaption} className="text-[10px] bg-[#222] border border-[#444] hover:border-purple-500/50 text-white rounded px-2 py-1 flex items-center gap-1 disabled:opacity-50">
+                      {status === 'variating' ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</> : <><Sparkles className="w-3 h-3 text-purple-400" /> {variations.length > 0 ? 'Re-spin AI' : 'Generate AI'}</>}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Generate variations button */}
-                {selectedAccountIds.length > 1 && variations.length === 0 && (
-                  <button onClick={generateVariations} disabled={status === 'variating'} className="w-full py-2.5 bg-[#222] border border-[#444] hover:border-purple-500/50 text-white rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                    {status === 'variating' ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating {selectedAccountIds.length - 1} variasi...</> : <><Sparkles className="w-4 h-4 text-purple-400" /> Generate {selectedAccountIds.length - 1} Variasi Caption</>}
-                  </button>
-                )}
-
-                {/* Variations preview */}
-                {variations.length > 0 && (
-                  <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-gray-300">📝 {totalCaptions} caption ready ({selectedAccountIds.length} akun)</p>
-                      <button onClick={generateVariations} className="text-[10px] text-purple-400 hover:text-purple-300 flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Re-spin</button>
+                {/* All variations - full text + editable */}
+                {selectedAccountIds.slice(1).map((accountId, idx) => {
+                  const v = variations[idx] || ''
+                  return (
+                  <div key={accountId} className="py-2 border-b border-[#2a2a2a] last:border-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] text-orange-400">@{accounts.find(a => a.accountId === accountId)?.username || `Akun ${idx + 2}`}</p>
+                      <span className="text-[9px] text-gray-600">{v.length} chars</span>
                     </div>
-
-                    {/* Show first account = base */}
-                    <div className="text-xs text-gray-500 mb-2 py-1 border-b border-[#2a2a2a]">
-                      <span className="text-orange-400">@{accounts.find(a => a.accountId === selectedAccountIds[0])?.username}</span> → Base caption ↑
-                    </div>
-
-                    {/* All variations - full text + editable */}
-                    {variations.map((v, i) => (
-                      <div key={i} className="py-2 border-b border-[#2a2a2a] last:border-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-[10px] text-orange-400">@{accounts.find(a => a.accountId === selectedAccountIds[i + 1])?.username || `Akun ${i + 2}`}</p>
-                          <span className="text-[9px] text-gray-600">{v.length} chars</span>
-                        </div>
-                        <textarea
-                          value={v}
-                          onChange={e => {
-                            const updated = [...variations]
-                            updated[i] = e.target.value
-                            setVariations(updated)
-                          }}
-                          rows={3}
-                          className="w-full px-2 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-lg text-xs text-gray-300 resize-none focus:border-orange-500/50 outline-none"
-                        />
-                      </div>
-                    ))}
+                    <textarea
+                      value={v}
+                      placeholder={`Ketik manual caption untuk akun ini...`}
+                      onChange={e => {
+                        const updated = [...variations]
+                        while (updated.length <= idx) updated.push('')
+                        updated[idx] = e.target.value
+                        setVariations(updated)
+                      }}
+                      rows={3}
+                      className="w-full px-2 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-lg text-xs text-gray-300 resize-none focus:border-orange-500/50 outline-none"
+                    />
                   </div>
-                )}
-              </>
+                )})}
+              </div>
             )}
 
             {/* Images & Video */}
