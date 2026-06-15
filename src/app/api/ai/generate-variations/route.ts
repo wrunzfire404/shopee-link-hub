@@ -35,6 +35,7 @@ RULES:
 - Panjang kurang lebih sama dengan base
 - Hashtag boleh beda-beda tapi tetep relevant
 - Referensi "link di bio" tetep ada tapi variasi kata-katanya
+- BATAS KARAKTER: TOTAL MAKSIMAL 400 KARAKTER (TERMASUK HASHTAG). WAJIB PENDEK!
 
 FORMAT OUTPUT:
 Tulis setiap variasi dipisah dengan "---" (3 dash). JANGAN kasih numbering atau label. Langsung caption aja.`
@@ -75,6 +76,23 @@ Buatin ${count} variasi dari caption di atas. Ingat: hook BEDA, susunan BEDA, ta
       .split('---')
       .map((v: string) => v.trim())
       .filter((v: string) => v.length > 20) // Filter out empty/short splits
+      .map((caption: string) => {
+        if (caption.length <= 480) return caption;
+        
+        const allHashtags = caption.match(/#\w+/g) || []
+        const tags = allHashtags.slice(0, 3).join(' ')
+        const captionWithoutTags = caption.replace(/#\w+/g, '').trim()
+        
+        const maxBodyLen = 480 - tags.length - 4
+        let body = captionWithoutTags.slice(0, maxBodyLen)
+        
+        const lastEnd = Math.max(body.lastIndexOf('.'), body.lastIndexOf('!'), body.lastIndexOf('?'), body.lastIndexOf('\n'))
+        if (lastEnd > maxBodyLen * 0.5) {
+          body = body.slice(0, lastEnd + 1)
+        }
+        
+        return body.trim() + '\n\n' + tags
+      })
 
     return NextResponse.json({ variations })
   } catch (err: any) {
