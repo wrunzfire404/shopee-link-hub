@@ -154,11 +154,31 @@ export default function ContentThreadsPage() {
     if (!file) return
     setUploading(true)
     try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch('/api/upload/media', { method: 'POST', body: form })
-      if (res.ok) { const { url } = await res.json(); setExtraImages(prev => [...prev, url]) }
-      else { const err = await res.json(); alert(err.error || 'Upload failed') }
+      if (file.type.startsWith('video/')) {
+        // Upload videos directly to tmpfiles.org from frontend to bypass Vercel's 4.5MB payload limit
+        const form = new FormData()
+        form.append('file', file)
+        const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: form })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.status === 'success' && data.data?.url) {
+            // Convert tmpfiles landing page URL to direct download URL by adding /dl/
+            const directUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+            setExtraImages(prev => [...prev, directUrl])
+          } else {
+            alert('Video upload failed: Invalid response')
+          }
+        } else {
+          alert('Video upload failed: Server error')
+        }
+      } else {
+        // Images go to backend (Imgur API)
+        const form = new FormData()
+        form.append('file', file)
+        const res = await fetch('/api/upload/media', { method: 'POST', body: form })
+        if (res.ok) { const { url } = await res.json(); setExtraImages(prev => [...prev, url]) }
+        else { const err = await res.json(); alert(err.error || 'Upload failed') }
+      }
     } catch { alert('Upload failed') }
     setUploading(false)
     e.target.value = ''
